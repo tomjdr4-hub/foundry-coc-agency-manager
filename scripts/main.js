@@ -15,20 +15,26 @@ Hooks.once("ready", () => {
 });
 
 Hooks.on("getSceneControlButtons", (controls) => {
-  const tool = {
-    name: MODULE_ID,
-    title: "COCAGENCY.App.Title",
-    icon: "fa-solid fa-user-secret",
-    button: true,
-    onClick: () => new AgencyApp().render(true),
-    onChange: () => new AgencyApp().render(true)
-  };
-
-  // Foundry v13 passes controls as a keyed object, v12 and earlier as an array.
+  // Foundry v13 passes controls as a keyed object with tools as a Record, v12 and earlier as arrays.
   if (Array.isArray(controls)) {
     const tokenControls = controls.find((c) => c.name === "token");
-    tokenControls?.tools.push(tool);
+    if (!tokenControls) return;
+    tokenControls.tools.push({
+      name: MODULE_ID,
+      title: "COCAGENCY.App.Title",
+      icon: "fa-solid fa-user-secret",
+      button: true,
+      onClick: () => new AgencyApp().render(true)
+    });
   } else if (controls?.tokens) {
-    controls.tokens.tools[tool.name] = tool;
+    controls.tokens.tools[MODULE_ID] = {
+      name: MODULE_ID,
+      title: "COCAGENCY.App.Title",
+      icon: "fa-solid fa-user-secret",
+      button: true,
+      visible: true,
+      order: Object.keys(controls.tokens.tools).length,
+      onChange: () => new AgencyApp().render(true)
+    };
   }
 });
