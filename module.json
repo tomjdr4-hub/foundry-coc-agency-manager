@@ -2,7 +2,7 @@
   "id": "coc-agency-manager",
   "title": "Agency Manager - Appel de Cthulhu",
   "description": "Outil de gestion de campagne pour l'Appel de Cthulhu : handouts par partie avec diffusion ciblée aux joueurs, suivi des PNJ rencontrés avec visibilité par joueur, journaux de notes des joueurs, et simulation d'une société d'investigateurs avec ses bureaux dans le monde.",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "compatibility": {
     "minimum": "14",
     "verified": "14",

@@ -31,7 +31,11 @@
       "Empty": "Aucun PNJ associé à cette partie.",
       "DropHint": "Glissez-déposez un acteur ici pour l'ajouter",
       "Unknown": "Acteur introuvable",
-      "NotePlaceholder": "Note du MJ (contexte, indices, relations...)"
+      "NotePlaceholder": "Note du MJ (contexte, indices, relations...)",
+      "MyNotes": "Mes notes sur ce PNJ",
+      "NotePageName": "{npc} — notes de {user}",
+      "NoteRequested": "Demande envoyée au MJ, la page de notes va s'ouvrir automatiquement.",
+      "NoGMOnline": "Aucun MJ n'est actuellement connecté pour créer cette page de notes."
     },
     "Society": {
       "Create": "Nouvelle société",

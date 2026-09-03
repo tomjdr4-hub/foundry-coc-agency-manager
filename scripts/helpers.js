@@ -1,4 +1,4 @@
-import { VISIBILITY_ALL } from "./data.js";
+import { MODULE_ID, VISIBILITY_ALL } from "./data.js";
 
 /** Opens Foundry's image FilePicker and resolves with the chosen path, or undefined if cancelled. */
 export function pickImage(current = "") {
@@ -50,28 +50,73 @@ export async function resolveHandoutDisplay(handout) {
   return { title: handout.title || page.name, kind: "journal", img: null, html };
 }
 
+/** Resolves the list of player user ids currently allowed to see a session (GM-executed only). */
+export function getSessionAllowedUserIds(session) {
+  return session.visibility === VISIBILITY_ALL ? game.users.filter((u) => !u.isGM).map((u) => u.id) : session.visibility;
+}
+
+/**
+ * Finds or creates the JournalEntry used for a session's player notes, persisting its uuid
+ * back onto the session via `mutateSession`. Must run on a client with permission to create
+ * journal entries (the GM's client, since a plain Player role may lack that world permission).
+ */
+export async function getOrCreateSessionJournal(session, mutateSession) {
+  let entry = session.journalUuid ? await fromUuid(session.journalUuid) : null;
+  if (entry) return entry;
+
+  entry = await JournalEntry.create({
+    name: game.i18n.format("COCAGENCY.Session.NotesJournalName", { name: session.name }),
+    pages: []
+  });
+  await mutateSession((s) => {
+    s.journalUuid = entry.uuid;
+  });
+  return entry;
+}
+
+/** Grants OWNER on the session's notes journal to every player currently allowed to see that session. */
+export async function grantSessionJournalOwnership(entry, session) {
+  const ownership = foundry.utils.deepClone(entry.ownership);
+  for (const userId of getSessionAllowedUserIds(session)) {
+    ownership[userId] = CONST.DOCUMENT_OWNERSHIP_LEVELS.OWNER;
+  }
+  await entry.update({ ownership });
+}
+
 /**
  * Ensures a session has a linked JournalEntry for player notes, granting OWNER
  * to every player who can currently see the session, then opens its sheet.
  */
 export async function openSessionNotesJournal(session, mutateSession) {
-  let entry = session.journalUuid ? await fromUuid(session.journalUuid) : null;
-
-  if (!entry) {
-    entry = await JournalEntry.create({
-      name: game.i18n.format("COCAGENCY.Session.NotesJournalName", { name: session.name }),
-      pages: []
-    });
-    await mutateSession((s) => {
-      s.journalUuid = entry.uuid;
-    });
-  }
-
-  const ownership = foundry.utils.deepClone(entry.ownership);
-  const allowedIds =
-    session.visibility === VISIBILITY_ALL ? game.users.filter((u) => !u.isGM).map((u) => u.id) : session.visibility;
-  for (const userId of allowedIds) ownership[userId] = CONST.DOCUMENT_OWNERSHIP_LEVELS.OWNER;
-  await entry.update({ ownership });
-
+  const entry = await getOrCreateSessionJournal(session, mutateSession);
+  await grantSessionJournalOwnership(entry, session);
   entry.sheet.render(true);
+}
+
+/**
+ * Finds or creates a private JournalEntryPage for `forUser`'s personal notes on a given NPC,
+ * inside the session's notes journal. The page's ownership is restricted to that single player
+ * (plus the GM), even though the parent entry is shared/owned by every player with session access.
+ * Must run on a client with permission to create journal entries (see getOrCreateSessionJournal).
+ */
+export async function ensureNpcNotePage(session, npc, forUser, mutateSession) {
+  const entry = await getOrCreateSessionJournal(session, mutateSession);
+  await grantSessionJournalOwnership(entry, session);
+
+  let page = entry.pages.find(
+    (p) => p.getFlag(MODULE_ID, "npcId") === npc.id && p.getFlag(MODULE_ID, "ownerUserId") === forUser.id
+  );
+  if (page) return page;
+
+  const actor = resolveActor(npc.actorUuid);
+  const created = await entry.createEmbeddedDocuments("JournalEntryPage", [
+    {
+      name: game.i18n.format("COCAGENCY.Npc.NotePageName", { npc: actor?.name ?? "?", user: forUser.name }),
+      type: "text",
+      text: { content: "" },
+      ownership: { default: CONST.DOCUMENT_OWNERSHIP_LEVELS.NONE, [forUser.id]: CONST.DOCUMENT_OWNERSHIP_LEVELS.OWNER },
+      flags: { [MODULE_ID]: { npcId: npc.id, ownerUserId: forUser.id } }
+    }
+  ]);
+  return created[0];
 }

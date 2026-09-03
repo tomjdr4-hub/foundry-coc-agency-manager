@@ -159,13 +159,16 @@
               {{#if n.note}}<p class="coc-agency-note-readonly">{{n.note}}</p>{{/if}}
               {{/if}}
             </div>
-            {{#if @root.isGM}}
             <div class="coc-agency-card-actions">
+              <button type="button" class="coc-agency-btn coc-agency-btn-sm" data-action="openNpcNotes" data-session-id="{{n.sessionId}}" data-npc-id="{{n.id}}" title="{{localize 'COCAGENCY.Npc.MyNotes'}}">
+                <i class="fa-solid fa-note-sticky"></i>
+              </button>
+              {{#if @root.isGM}}
               <button type="button" class="coc-agency-btn coc-agency-btn-sm coc-agency-btn-danger" data-action="removeNpc" data-session-id="{{n.sessionId}}" data-npc-id="{{n.id}}" title="{{localize 'COCAGENCY.Common.Delete'}}">
                 <i class="fa-solid fa-trash"></i>
               </button>
+              {{/if}}
             </div>
-            {{/if}}
           </div>
           {{else}}
           <p class="coc-agency-empty">{{localize "COCAGENCY.Npc.Empty"}}</p>

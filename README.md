@@ -28,6 +28,11 @@ Non affilié à Chaosium Inc. Projet fan, à but non commercial.
   droits d'écriture accordés automatiquement aux joueurs qui y ont accès -
   les joueurs y prennent leurs notes d'enquête via l'éditeur de journal natif
   de Foundry.
+- **Notes personnelles par PNJ** : chaque joueur peut ouvrir, depuis la carte
+  d'un PNJ, sa propre page de notes privée sur ce PNJ (bouton icône
+  post-it). Cette page vit dans le journal de la partie mais n'est visible
+  que par ce joueur et le MJ, même si d'autres joueurs ont accès au même
+  journal.
 
 ### Société d'investigateurs
 
@@ -79,3 +84,11 @@ Accessible aussi via l'API : `game.modules.get("coc-agency-manager").api.open()`
 - Les PNJ référencent de vrais Acteurs du monde (par UUID) : le module
   n'affiche que leur nom/image/lien vers la fiche, il ne duplique pas leurs
   données.
+- La fenêtre se rafraîchit automatiquement pour tous les clients connectés dès
+  que le MJ modifie les données (visibilité, ajout d'un handout ou d'un PNJ...),
+  sans qu'un rechargement de page soit nécessaire côté joueur.
+- La création de journal (notes de partie et notes personnelles par PNJ)
+  nécessite des droits que les joueurs n'ont pas forcément par défaut : quand
+  un joueur clique, la demande est relayée à un client MJ connecté qui
+  effectue la création, puis prévient le joueur pour ouvrir sa page. Si aucun
+  MJ n'est connecté, le joueur est averti que la demande ne peut pas aboutir.

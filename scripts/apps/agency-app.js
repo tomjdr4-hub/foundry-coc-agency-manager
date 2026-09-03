@@ -19,8 +19,15 @@ import {
   findSociety,
   findOffice
 } from "../data.js";
-import { getDroppedDocumentData, resolveActor, resolveHandoutDisplay, openSessionNotesJournal, pickImage } from "../helpers.js";
-import { pushHandoutToPlayers } from "../socket.js";
+import {
+  getDroppedDocumentData,
+  resolveActor,
+  resolveHandoutDisplay,
+  openSessionNotesJournal,
+  ensureNpcNotePage,
+  pickImage
+} from "../helpers.js";
+import { pushHandoutToPlayers, requestNpcNotePage } from "../socket.js";
 import { HandoutLightboxApp } from "./lightbox-app.js";
 
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
@@ -57,6 +64,7 @@ export class AgencyApp extends HandlebarsApplicationMixin(ApplicationV2) {
       toggleNpcUser: this.prototype.toggleNpcUser,
       openActorSheet: this.prototype.openActorSheet,
       openSessionNotes: this.prototype.openSessionNotes,
+      openNpcNotes: this.prototype.openNpcNotes,
       createSociety: this.prototype.createSociety,
       selectSociety: this.prototype.selectSociety,
       deleteSociety: this.prototype.deleteSociety,
@@ -84,6 +92,23 @@ export class AgencyApp extends HandlebarsApplicationMixin(ApplicationV2) {
     selectedOfficeId: null,
     placingOffice: false
   };
+
+  static #openInstances = new Set();
+
+  /** Re-renders every currently open AgencyApp window (used when the shared world data changes). */
+  static refreshOpen() {
+    for (const app of AgencyApp.#openInstances) app.render();
+  }
+
+  async _onFirstRender(context, options) {
+    await super._onFirstRender(context, options);
+    AgencyApp.#openInstances.add(this);
+  }
+
+  _onClose(options) {
+    super._onClose(options);
+    AgencyApp.#openInstances.delete(this);
+  }
 
   async _prepareContext() {
     const user = game.user;
@@ -303,6 +328,29 @@ export class AgencyApp extends HandlebarsApplicationMixin(ApplicationV2) {
     const session = findSession(getData(), sessionId);
     if (!session) return;
     await openSessionNotesJournal(session, (fn) => mutate((d) => fn(findSession(d, sessionId))));
+  }
+
+  /**
+   * Opens the current user's private note page for a given NPC, creating it on first use.
+   * Journal creation needs GM-level permission, so a non-GM player's request is relayed to a
+   * connected GM's client via socket; the GM never sees or edits that page's content.
+   */
+  async openNpcNotes(event, target) {
+    const { sessionId, npcId } = target.dataset;
+    if (game.user.isGM) {
+      const session = findSession(getData(), sessionId);
+      const npc = findNpc(getData(), sessionId, npcId);
+      if (!session || !npc) return;
+      const page = await ensureNpcNotePage(session, npc, game.user, (fn) => mutate((d) => fn(findSession(d, sessionId))));
+      page.sheet.render(true);
+      return;
+    }
+    if (!game.users.some((u) => u.isGM && u.active)) {
+      ui.notifications.warn(game.i18n.localize("COCAGENCY.Npc.NoGMOnline"));
+      return;
+    }
+    requestNpcNotePage(sessionId, npcId);
+    ui.notifications.info(game.i18n.localize("COCAGENCY.Npc.NoteRequested"));
   }
 
   /* -------------------------------------------- */

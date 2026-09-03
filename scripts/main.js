@@ -1,4 +1,4 @@
-import { MODULE_ID, registerSettings } from "./data.js";
+import { MODULE_ID, SETTING_KEY, registerSettings } from "./data.js";
 import { AgencyApp } from "./apps/agency-app.js";
 import { registerSocketListener } from "./socket.js";
 
@@ -12,6 +12,14 @@ Hooks.once("init", () => {
 
 Hooks.once("ready", () => {
   registerSocketListener();
+});
+
+// World settings are replicated to every connected client; use that to refresh any open
+// Agency window live instead of requiring players to reload the page to see GM changes.
+const SETTING_FULL_KEY = `${MODULE_ID}.${SETTING_KEY}`;
+Hooks.on("updateSetting", (setting) => {
+  if (setting.key !== SETTING_FULL_KEY) return;
+  AgencyApp.refreshOpen();
 });
 
 // Foundry v14 passes `controls` as a Record<string, SceneControl>, and each group's `tools`

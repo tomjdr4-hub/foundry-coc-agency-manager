@@ -31,7 +31,11 @@
       "Empty": "No NPC linked to this session.",
       "DropHint": "Drag & drop an actor here to add it",
       "Unknown": "Actor not found",
-      "NotePlaceholder": "GM note (context, clues, relationships...)"
+      "NotePlaceholder": "GM note (context, clues, relationships...)",
+      "MyNotes": "My notes on this NPC",
+      "NotePageName": "{npc} — notes by {user}",
+      "NoteRequested": "Request sent to the GM, your note page will open automatically.",
+      "NoGMOnline": "No GM is currently connected to create this note page."
     },
     "Society": {
       "Create": "New agency",
