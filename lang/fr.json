@@ -1,0 +1,64 @@
+{
+  "COCAGENCY": {
+    "App": { "Title": "Agence d'investigateurs" },
+    "Tabs": { "Sessions": "Parties", "Society": "Société" },
+    "Common": { "Add": "Ajouter", "Cancel": "Annuler", "Delete": "Supprimer" },
+    "Visibility": { "All": "Tous", "SessionLabel": "Visible par :" },
+    "Session": {
+      "Create": "Nouvelle partie",
+      "NewName": "Nouvelle partie",
+      "Empty": "Aucune partie pour le moment.",
+      "SelectPrompt": "Sélectionnez ou créez une partie.",
+      "Notes": "Notes de partie",
+      "NotesJournalName": "Notes - {name}",
+      "DeleteTitle": "Supprimer la partie",
+      "DeleteConfirm": "Supprimer cette partie ainsi que tous ses handouts et PNJ associés ? Cette action est irréversible."
+    },
+    "Handout": {
+      "Title": "Handouts",
+      "NewName": "Nouveau handout",
+      "AddImage": "Image",
+      "AddJournal": "Page de journal",
+      "Show": "Montrer aux joueurs",
+      "Empty": "Aucun handout dans cette partie.",
+      "PickJournalTitle": "Choisir une page de journal",
+      "PickPage": "Page",
+      "NoJournalPages": "Aucune page de journal disponible dans ce monde. Créez d'abord une entrée de journal.",
+      "MissingPage": "Cette page de journal n'existe plus."
+    },
+    "Npc": {
+      "Title": "PNJ rencontrés",
+      "Empty": "Aucun PNJ associé à cette partie.",
+      "DropHint": "Glissez-déposez un acteur ici pour l'ajouter",
+      "Unknown": "Acteur introuvable",
+      "NotePlaceholder": "Note du MJ (contexte, indices, relations...)"
+    },
+    "Society": {
+      "Create": "Nouvelle société",
+      "NewName": "Nouvelle société",
+      "Empty": "Aucune société créée.",
+      "SelectPrompt": "Sélectionnez ou créez une société.",
+      "DeleteTitle": "Supprimer la société",
+      "DeleteConfirm": "Supprimer cette société ainsi que tous ses bureaux ? Cette action est irréversible.",
+      "SetImage": "Logo",
+      "SetMap": "Carte du monde",
+      "NoMap": "Aucune carte définie. Le MJ peut en importer une pour y placer les bureaux.",
+      "DescriptionPlaceholder": "Description de la société (histoire, buts, moyens...)"
+    },
+    "Office": {
+      "Title": "Bureaux",
+      "Create": "Nouveau bureau",
+      "NewName": "Nouveau bureau",
+      "Empty": "Aucun bureau pour cette société.",
+      "LocationPlaceholder": "Lieu (ville, pays)",
+      "DescriptionPlaceholder": "Description du bureau",
+      "SetImage": "Image",
+      "PlacePin": "Placer sur la carte",
+      "Staff": "Personnel",
+      "NoStaff": "Aucun PNJ affecté à ce bureau.",
+      "DeleteTitle": "Supprimer le bureau",
+      "DeleteConfirm": "Supprimer ce bureau ? Cette action est irréversible."
+    },
+    "Lightbox": { "Title": "Document" }
+  }
+}

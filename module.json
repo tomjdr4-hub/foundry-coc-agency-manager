@@ -1,0 +1,40 @@
+{
+  "id": "coc-agency-manager",
+  "title": "Agency Manager - Appel de Cthulhu",
+  "description": "Outil de gestion de campagne pour l'Appel de Cthulhu : handouts par partie avec diffusion ciblée aux joueurs, suivi des PNJ rencontrés avec visibilité par joueur, journaux de notes des joueurs, et simulation d'une société d'investigateurs avec ses bureaux dans le monde.",
+  "version": "0.1.0",
+  "compatibility": {
+    "minimum": "13",
+    "verified": "13",
+    "maximum": "14"
+  },
+  "authors": [
+    {
+      "name": "tomjdr4-hub"
+    }
+  ],
+  "esmodules": [
+    "scripts/main.js"
+  ],
+  "styles": [
+    "styles/agency.css"
+  ],
+  "languages": [
+    {
+      "lang": "fr",
+      "name": "Français",
+      "path": "lang/fr.json"
+    },
+    {
+      "lang": "en",
+      "name": "English",
+      "path": "lang/en.json"
+    }
+  ],
+  "socket": true,
+  "url": "https://github.com/tomjdr4-hub/foundry-coc-agency-manager",
+  "manifest": "https://raw.githubusercontent.com/tomjdr4-hub/foundry-coc-agency-manager/main/module.json",
+  "download": "https://github.com/tomjdr4-hub/foundry-coc-agency-manager/releases/latest/download/module.zip",
+  "license": "LICENSE",
+  "readme": "README.md"
+}

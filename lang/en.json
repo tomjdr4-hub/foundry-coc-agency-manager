@@ -1,0 +1,64 @@
+{
+  "COCAGENCY": {
+    "App": { "Title": "Investigator Agency" },
+    "Tabs": { "Sessions": "Sessions", "Society": "Agency" },
+    "Common": { "Add": "Add", "Cancel": "Cancel", "Delete": "Delete" },
+    "Visibility": { "All": "All", "SessionLabel": "Visible to:" },
+    "Session": {
+      "Create": "New session",
+      "NewName": "New session",
+      "Empty": "No session yet.",
+      "SelectPrompt": "Select or create a session.",
+      "Notes": "Session notes",
+      "NotesJournalName": "Notes - {name}",
+      "DeleteTitle": "Delete session",
+      "DeleteConfirm": "Delete this session along with all its handouts and NPCs? This cannot be undone."
+    },
+    "Handout": {
+      "Title": "Handouts",
+      "NewName": "New handout",
+      "AddImage": "Image",
+      "AddJournal": "Journal page",
+      "Show": "Show to players",
+      "Empty": "No handout in this session.",
+      "PickJournalTitle": "Pick a journal page",
+      "PickPage": "Page",
+      "NoJournalPages": "No journal page available in this world. Create a journal entry first.",
+      "MissingPage": "This journal page no longer exists."
+    },
+    "Npc": {
+      "Title": "Encountered NPCs",
+      "Empty": "No NPC linked to this session.",
+      "DropHint": "Drag & drop an actor here to add it",
+      "Unknown": "Actor not found",
+      "NotePlaceholder": "GM note (context, clues, relationships...)"
+    },
+    "Society": {
+      "Create": "New agency",
+      "NewName": "New agency",
+      "Empty": "No agency created.",
+      "SelectPrompt": "Select or create an agency.",
+      "DeleteTitle": "Delete agency",
+      "DeleteConfirm": "Delete this agency along with all its offices? This cannot be undone.",
+      "SetImage": "Logo",
+      "SetMap": "World map",
+      "NoMap": "No map set. The GM can upload one to place offices on it.",
+      "DescriptionPlaceholder": "Agency description (history, goals, resources...)"
+    },
+    "Office": {
+      "Title": "Offices",
+      "Create": "New office",
+      "NewName": "New office",
+      "Empty": "No office for this agency.",
+      "LocationPlaceholder": "Location (city, country)",
+      "DescriptionPlaceholder": "Office description",
+      "SetImage": "Image",
+      "PlacePin": "Place on map",
+      "Staff": "Staff",
+      "NoStaff": "No NPC assigned to this office.",
+      "DeleteTitle": "Delete office",
+      "DeleteConfirm": "Delete this office? This cannot be undone."
+    },
+    "Lightbox": { "Title": "Document" }
+  }
+}
