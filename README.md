@@ -33,6 +33,14 @@ Non affilié à Chaosium Inc. Projet fan, à but non commercial.
   post-it). Cette page vit dans le journal de la partie mais n'est visible
   que par ce joueur et le MJ, même si d'autres joueurs ont accès au même
   journal.
+- **Indicateur "Nouveau"** : un badge signale à chaque joueur les handouts et
+  PNJ qu'il n'a pas encore vus dans sa propre fenêtre ; il disparaît
+  automatiquement dès l'affichage. Le MJ voit en plus un compteur "x/y
+  joueurs" sous chaque handout/PNJ.
+- **Historique des révélations** : le MJ dispose, par partie, d'un journal
+  listant qui a reçu quel handout et quand.
+- **Scène liée** : une partie peut être reliée à une scène du monde ; le MJ
+  peut l'activer pour toute la table en un clic depuis la fenêtre.
 
 ### Société d'investigateurs
 
@@ -44,6 +52,38 @@ Non affilié à Chaosium Inc. Projet fan, à but non commercial.
   PNJ affectés (glisser-déposer un Acteur).
 - La visibilité de chaque bureau est réglable par joueur, comme pour les
   handouts et les PNJ.
+- **Investigateurs affectés** : le MJ peut affecter un personnage-joueur à un
+  bureau précis (glisser-déposer), pour représenter les postes/missions dans
+  le monde. Un personnage n'est affecté qu'à un seul bureau à la fois.
+- **Équipement commandable** : chaque société a un catalogue d'équipement
+  (nom, description, image) géré par le MJ. Les joueurs peuvent commander un
+  article ; le MJ fixe librement un délai (texte libre, ex. "3 jours") et
+  suit le statut de chaque commande (en attente/approuvée/refusée/reçue).
+
+### Réseau de PNJ
+
+Un onglet "Réseau" affiche un schéma visuel (bulles reliées par des traits)
+des PNJ suivis dans les parties et les bureaux, avec les relations que le MJ
+définit entre eux (ex. "connaît", "rival de"). Chaque joueur ne voit que les
+PNJ et relations auxquels il a accès.
+
+### Chronologie de campagne
+
+Un onglet "Chronologie" liste, dans l'ordre, le récapitulatif de chaque
+partie visible par le joueur (texte libre rédigé par le MJ dans le détail de
+la partie), pour donner une vue d'ensemble de la campagne.
+
+### Recherche globale
+
+Un champ de recherche dans l'en-tête de la fenêtre retrouve un handout, un
+PNJ, un bureau ou un équipement par son nom, sur l'ensemble de la campagne, et
+permet d'y sauter directement.
+
+### Export / Import
+
+Le MJ peut exporter toutes les données du module (parties, sociétés...) en un
+fichier JSON (sauvegarde, transfert vers un autre monde), et les réimporter
+(remplace intégralement les données actuelles, après confirmation).
 
 ### Visibilité par joueur
 
@@ -63,13 +103,15 @@ l'URL du manifeste ci-dessus.
 
 Un bouton dédié (icône <i class="fa-solid fa-user-secret"></i>) apparaît dans
 les contrôles de la scène, à côté des outils de jeton, aussi bien pour le MJ
-que pour les joueurs. Il ouvre la fenêtre "Agence d'investigateurs" avec deux
-onglets :
+que pour les joueurs. Il ouvre la fenêtre "Agence d'investigateurs" avec
+quatre onglets :
 
 - **Parties** : liste des sessions à gauche, détail (handouts + PNJ + accès
-  aux notes) à droite.
-- **Société** : liste des sociétés à gauche, détail (carte + bureaux) à
-  droite.
+  aux notes + scène liée) à droite.
+- **Société** : liste des sociétés à gauche, détail (carte + bureaux +
+  équipement) à droite.
+- **Réseau** : schéma des PNJ suivis et de leurs relations.
+- **Chronologie** : fil des récapitulatifs de chaque partie.
 
 Accessible aussi via l'API : `game.modules.get("coc-agency-manager").api.open()`.
 
@@ -87,8 +129,9 @@ Accessible aussi via l'API : `game.modules.get("coc-agency-manager").api.open()`
 - La fenêtre se rafraîchit automatiquement pour tous les clients connectés dès
   que le MJ modifie les données (visibilité, ajout d'un handout ou d'un PNJ...),
   sans qu'un rechargement de page soit nécessaire côté joueur.
-- La création de journal (notes de partie et notes personnelles par PNJ)
-  nécessite des droits que les joueurs n'ont pas forcément par défaut : quand
-  un joueur clique, la demande est relayée à un client MJ connecté qui
-  effectue la création, puis prévient le joueur pour ouvrir sa page. Si aucun
-  MJ n'est connecté, le joueur est averti que la demande ne peut pas aboutir.
+- La création de journal (notes de partie et notes personnelles par PNJ) et la
+  commande d'équipement nécessitent des droits que les joueurs n'ont pas
+  forcément par défaut : quand un joueur déclenche l'une de ces actions, la
+  demande est relayée à un client MJ connecté qui l'exécute réellement (et,
+  pour les notes, prévient ensuite le joueur pour ouvrir sa page). Si aucun MJ
+  n'est connecté, le joueur est averti que la demande ne peut pas aboutir.

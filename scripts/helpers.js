@@ -36,6 +36,15 @@ export function resolveActor(actorUuid) {
   }
 }
 
+export function resolveScene(sceneUuid) {
+  if (!sceneUuid) return null;
+  try {
+    return fromUuidSync(sceneUuid);
+  } catch (err) {
+    return null;
+  }
+}
+
 /** Builds the { title, kind, img, html } payload used to render a handout, either locally or via socket. */
 export async function resolveHandoutDisplay(handout) {
   if (handout.kind === "image") {

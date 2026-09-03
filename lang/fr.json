@@ -1,9 +1,23 @@
 {
   "COCAGENCY": {
     "App": { "Title": "Agence d'investigateurs" },
-    "Tabs": { "Sessions": "Parties", "Society": "Société" },
-    "Common": { "Add": "Ajouter", "Cancel": "Annuler", "Delete": "Supprimer" },
+    "Tabs": { "Sessions": "Parties", "Society": "Société", "Network": "Réseau", "Timeline": "Chronologie" },
+    "Common": {
+      "Add": "Ajouter",
+      "Cancel": "Annuler",
+      "Delete": "Supprimer",
+      "New": "Nouveau",
+      "SeenBy": "Vu par"
+    },
     "Visibility": { "All": "Tous", "SessionLabel": "Visible par :" },
+    "Search": { "Placeholder": "Rechercher..." },
+    "Export": {
+      "Export": "Exporter les données",
+      "Import": "Importer des données",
+      "InvalidFile": "Fichier invalide : ce n'est pas un export JSON valide.",
+      "ImportTitle": "Importer des données",
+      "ImportConfirm": "Cette opération remplace toutes les données actuelles du module (parties, sociétés...) par le contenu du fichier importé. Continuer ?"
+    },
     "Session": {
       "Create": "Nouvelle partie",
       "NewName": "Nouvelle partie",
@@ -12,7 +26,15 @@
       "Notes": "Notes de partie",
       "NotesJournalName": "Notes - {name}",
       "DeleteTitle": "Supprimer la partie",
-      "DeleteConfirm": "Supprimer cette partie ainsi que tous ses handouts et PNJ associés ? Cette action est irréversible."
+      "DeleteConfirm": "Supprimer cette partie ainsi que tous ses handouts et PNJ associés ? Cette action est irréversible.",
+      "LinkScene": "Lier une scène",
+      "UnlinkScene": "Délier",
+      "ActivateScene": "Activer",
+      "PickSceneTitle": "Choisir une scène",
+      "Scene": "Scène",
+      "NoScenes": "Aucune scène disponible dans ce monde.",
+      "RecapPlaceholder": "Récapitulatif de la partie, visible par les joueurs y ayant accès...",
+      "RevealLog": "Historique des révélations"
     },
     "Handout": {
       "Title": "Handouts",
@@ -60,9 +82,42 @@
       "PlacePin": "Placer sur la carte",
       "Staff": "Personnel",
       "NoStaff": "Aucun PNJ affecté à ce bureau.",
+      "Assigned": "Investigateurs affectés",
+      "AssignedDropHint": "Glissez-déposez un personnage ici pour l'affecter",
+      "NoAssigned": "Aucun investigateur affecté à ce bureau.",
+      "YourCharacter": "Votre personnage",
       "DeleteTitle": "Supprimer le bureau",
       "DeleteConfirm": "Supprimer ce bureau ? Cette action est irréversible."
     },
+    "Equipment": {
+      "Title": "Équipement de l'agence",
+      "Create": "Ajouter un équipement",
+      "NewName": "Nouvel équipement",
+      "DescriptionPlaceholder": "Description de l'équipement",
+      "Order": "Commander",
+      "Empty": "Aucun équipement au catalogue.",
+      "Item": "Article",
+      "RequestedBy": "Demandé par",
+      "Status": "Statut",
+      "Eta": "Délai",
+      "EtaPlaceholder": "ex : 3 jours",
+      "StatusPending": "En attente",
+      "StatusApproved": "Approuvé",
+      "StatusDelivered": "Reçu",
+      "StatusDenied": "Refusé",
+      "NoGMOnline": "Aucun MJ n'est actuellement connecté pour traiter cette commande.",
+      "OrderRequested": "Commande envoyée au MJ."
+    },
+    "Network": {
+      "AddRelationship": "Ajouter une relation",
+      "From": "PNJ",
+      "To": "Relié à",
+      "Label": "Nature de la relation",
+      "LabelPlaceholder": "ex : connaît, rival de, employé de...",
+      "NotEnoughNpcs": "Il faut au moins deux PNJ suivis (dans une partie ou un bureau) pour créer une relation.",
+      "Empty": "Aucun PNJ suivi pour le moment."
+    },
+    "Timeline": { "Empty": "Aucun récapitulatif de partie pour le moment." },
     "Lightbox": { "Title": "Document" }
   }
 }

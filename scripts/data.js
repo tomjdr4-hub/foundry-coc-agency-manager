@@ -5,12 +5,36 @@ export const SOCKET_NAME = `module.${MODULE_ID}`;
 /** Visibility value used everywhere: "all" or an array of Foundry user ids. */
 export const VISIBILITY_ALL = "all";
 
+const REVEAL_LOG_LIMIT = 50;
+
 function emptyData() {
   return {
     version: 1,
     sessions: [],
-    societies: []
+    societies: [],
+    npcRelationships: []
   };
+}
+
+/**
+ * Backfills fields added after a user's data was first created. `mergeObject` at the root
+ * (see getData) only completes top-level keys, not fields inside objects already stored in
+ * arrays (existing sessions/handouts/npcs/offices/societies), so this runs on every load.
+ */
+function normalize(data) {
+  for (const session of data.sessions) {
+    session.sceneUuid ??= null;
+    session.recap ??= "";
+    session.revealLog ??= [];
+    for (const handout of session.handouts) handout.seenBy ??= [];
+    for (const npc of session.npcs) npc.seenBy ??= [];
+  }
+  for (const society of data.societies) {
+    society.equipment ??= [];
+    society.orders ??= [];
+    for (const office of society.offices) office.assignedActorUuids ??= [];
+  }
+  return data;
 }
 
 export function registerSettings() {
@@ -28,7 +52,8 @@ export function getData() {
   const data = foundry.utils.mergeObject(emptyData(), raw, { inplace: false });
   data.sessions ??= [];
   data.societies ??= [];
-  return data;
+  data.npcRelationships ??= [];
+  return normalize(data);
 }
 
 /** Persists the given data object. GM-only: callers must guard with game.user.isGM. */
@@ -55,6 +80,9 @@ export function newSession(name) {
     order: Date.now(),
     visibility: VISIBILITY_ALL,
     journalUuid: null,
+    sceneUuid: null,
+    recap: "",
+    revealLog: [],
     handouts: [],
     npcs: []
   };
@@ -67,7 +95,8 @@ export function newHandout({ title, kind, img = null, pageUuid = null } = {}) {
     kind: kind || "image", // "image" | "journal"
     img,
     pageUuid,
-    visibility: VISIBILITY_ALL
+    visibility: VISIBILITY_ALL,
+    seenBy: []
   };
 }
 
@@ -76,7 +105,8 @@ export function newNpcEntry({ actorUuid, note = "" } = {}) {
     id: uid(),
     actorUuid,
     note,
-    visibility: VISIBILITY_ALL
+    visibility: VISIBILITY_ALL,
+    seenBy: []
   };
 }
 
@@ -87,7 +117,9 @@ export function newSociety(name) {
     description: "",
     img: null,
     mapImage: null,
-    offices: []
+    offices: [],
+    equipment: [],
+    orders: []
   };
 }
 
@@ -101,7 +133,40 @@ export function newOffice({ name, location = "", description = "" } = {}) {
     x: null,
     y: null,
     npcUuids: [],
+    assignedActorUuids: [],
     visibility: VISIBILITY_ALL
+  };
+}
+
+export function newEquipmentItem({ name, description = "" } = {}) {
+  return {
+    id: uid(),
+    name: name || game.i18n.localize("COCAGENCY.Equipment.NewName"),
+    description,
+    img: null
+  };
+}
+
+export function newOrder({ itemId, itemName, requestedBy, requestedByName } = {}) {
+  return {
+    id: uid(),
+    itemId,
+    itemName,
+    requestedBy,
+    requestedByName,
+    requestedAt: Date.now(),
+    status: "pending", // "pending" | "approved" | "denied" | "delivered"
+    eta: "",
+    gmNote: ""
+  };
+}
+
+export function newRelationship({ fromActorUuid, toActorUuid, label = "" } = {}) {
+  return {
+    id: uid(),
+    fromActorUuid,
+    toActorUuid,
+    label
   };
 }
 
@@ -162,4 +227,27 @@ export function findSociety(data, societyId) {
 
 export function findOffice(data, societyId, officeId) {
   return findSociety(data, societyId)?.offices.find((o) => o.id === officeId) ?? null;
+}
+
+export function findEquipmentItem(data, societyId, itemId) {
+  return findSociety(data, societyId)?.equipment.find((e) => e.id === itemId) ?? null;
+}
+
+export function findOrder(data, societyId, orderId) {
+  return findSociety(data, societyId)?.orders.find((o) => o.id === orderId) ?? null;
+}
+
+/** Appends a reveal-log entry to a session, keeping only the most recent REVEAL_LOG_LIMIT entries. */
+export function pushRevealLogEntry(session, entry) {
+  session.revealLog.unshift({ id: uid(), at: Date.now(), ...entry });
+  session.revealLog.length = Math.min(session.revealLog.length, REVEAL_LOG_LIMIT);
+}
+
+/** Removes an actor from every office's assignedActorUuids across all societies (single active posting). */
+export function unassignActorEverywhere(data, actorUuid) {
+  for (const society of data.societies) {
+    for (const office of society.offices) {
+      office.assignedActorUuids = office.assignedActorUuids.filter((u) => u !== actorUuid);
+    }
+  }
 }

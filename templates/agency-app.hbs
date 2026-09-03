@@ -6,6 +6,37 @@
   <a class="coc-agency-tab {{#if (eq tab "society")}}active{{/if}}" data-action="setTab" data-tab="society">
     <i class="fa-solid fa-building-columns"></i> {{localize "COCAGENCY.Tabs.Society"}}
   </a>
+  <a class="coc-agency-tab {{#if (eq tab "network")}}active{{/if}}" data-action="setTab" data-tab="network">
+    <i class="fa-solid fa-diagram-project"></i> {{localize "COCAGENCY.Tabs.Network"}}
+  </a>
+  <a class="coc-agency-tab {{#if (eq tab "timeline")}}active{{/if}}" data-action="setTab" data-tab="timeline">
+    <i class="fa-solid fa-timeline"></i> {{localize "COCAGENCY.Tabs.Timeline"}}
+  </a>
+  <div class="coc-agency-nav-search">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <input type="text" data-search-input value="{{searchQuery}}" placeholder="{{localize 'COCAGENCY.Search.Placeholder'}}" />
+    {{#if searchResults.length}}
+    <div class="coc-agency-search-results">
+      {{#each searchResults as |r|}}
+      <div class="coc-agency-search-result" data-action="jumpToResult" data-type="{{r.type}}" data-session-id="{{r.sessionId}}" data-society-id="{{r.societyId}}" data-office-id="{{r.officeId}}">
+        <strong>{{r.label}}</strong>
+        <span>{{r.parent}}</span>
+      </div>
+      {{/each}}
+    </div>
+    {{/if}}
+  </div>
+  {{#if isGM}}
+  <div class="coc-agency-nav-actions">
+    <button type="button" class="coc-agency-btn coc-agency-btn-sm" data-action="exportData" title="{{localize 'COCAGENCY.Export.Export'}}">
+      <i class="fa-solid fa-download"></i>
+    </button>
+    <button type="button" class="coc-agency-btn coc-agency-btn-sm" data-action="importData" title="{{localize 'COCAGENCY.Export.Import'}}">
+      <i class="fa-solid fa-upload"></i>
+    </button>
+    <input type="file" accept="application/json" data-file-input="import" hidden />
+  </div>
+  {{/if}}
 </nav>
 
 <section class="coc-agency-panel {{#if (eq tab "sessions")}}active{{/if}}" data-tab="sessions">
@@ -44,6 +75,30 @@
         </button>
       </header>
 
+      <div class="coc-agency-scene-link">
+        {{#if sceneName}}
+        <span><i class="fa-solid fa-map-location-dot"></i> {{sceneName}}</span>
+        {{#if @root.isGM}}
+        <button type="button" class="coc-agency-btn coc-agency-btn-sm" data-action="activateScene" data-session-id="{{id}}">
+          <i class="fa-solid fa-play"></i> {{localize "COCAGENCY.Session.ActivateScene"}}
+        </button>
+        <button type="button" class="coc-agency-btn coc-agency-btn-sm" data-action="unlinkScene" data-session-id="{{id}}">
+          <i class="fa-solid fa-link-slash"></i> {{localize "COCAGENCY.Session.UnlinkScene"}}
+        </button>
+        {{/if}}
+        {{else if @root.isGM}}
+        <button type="button" class="coc-agency-btn coc-agency-btn-sm" data-action="linkScene" data-session-id="{{id}}">
+          <i class="fa-solid fa-link"></i> {{localize "COCAGENCY.Session.LinkScene"}}
+        </button>
+        {{/if}}
+      </div>
+
+      {{#if @root.isGM}}
+      <textarea class="coc-agency-description" rows="2" placeholder="{{localize 'COCAGENCY.Session.RecapPlaceholder'}}" data-field="recap" data-session-id="{{id}}">{{recap}}</textarea>
+      {{else}}
+      {{#if recap}}<p class="coc-agency-description-readonly">{{recap}}</p>{{/if}}
+      {{/if}}
+
       {{#if @root.isGM}}
       <div class="coc-agency-visibility">
         <span class="coc-agency-visibility-label">{{localize "COCAGENCY.Visibility.SessionLabel"}}</span>
@@ -77,6 +132,7 @@
         <div class="coc-agency-cards">
           {{#each handouts as |h|}}
           <div class="coc-agency-card">
+            {{#if h.isNew}}<span class="coc-agency-badge-new">{{localize "COCAGENCY.Common.New"}}</span>{{/if}}
             <div class="coc-agency-card-thumb">
               {{#if (eq h.kind "image")}}
               <img src="{{h.img}}" alt="{{h.title}}" />
@@ -87,6 +143,7 @@
             <div class="coc-agency-card-body">
               <strong>{{h.title}}</strong>
               {{#if @root.isGM}}
+              <span class="coc-agency-seen-count">{{localize "COCAGENCY.Common.SeenBy"}} {{h.seenCount}}/{{h.seenTotal}}</span>
               <div class="coc-agency-visibility">
                 <label class="coc-agency-chip coc-agency-chip-sm {{#if h.visibleAll}}active{{/if}}">
                   <input type="checkbox" {{#if h.visibleAll}}checked{{/if}} data-action="toggleHandoutAll" data-session-id="{{h.sessionId}}" data-handout-id="{{h.id}}" />
@@ -118,6 +175,21 @@
         </div>
       </div>
 
+      {{#if @root.isGM}}
+      {{#if revealLog.length}}
+      <div class="coc-agency-section">
+        <div class="coc-agency-section-header">
+          <h3><i class="fa-solid fa-clock-rotate-left"></i> {{localize "COCAGENCY.Session.RevealLog"}}</h3>
+        </div>
+        <ul class="coc-agency-reveal-log">
+          {{#each revealLog as |entry|}}
+          <li><strong>{{entry.handoutTitle}}</strong> — {{entry.targets}} <span class="coc-agency-reveal-date">{{entry.at}}</span></li>
+          {{/each}}
+        </ul>
+      </div>
+      {{/if}}
+      {{/if}}
+
       <div class="coc-agency-section">
         <div class="coc-agency-section-header">
           <h3><i class="fa-solid fa-people-group"></i> {{localize "COCAGENCY.Npc.Title"}}</h3>
@@ -130,6 +202,7 @@
         <div class="coc-agency-cards">
           {{#each npcs as |n|}}
           <div class="coc-agency-card">
+            {{#if n.isNew}}<span class="coc-agency-badge-new">{{localize "COCAGENCY.Common.New"}}</span>{{/if}}
             <div class="coc-agency-card-thumb">
               <img src="{{n.img}}" alt="{{n.name}}" />
             </div>
@@ -142,6 +215,7 @@
                 {{/if}}
               </strong>
               {{#if @root.isGM}}
+              <span class="coc-agency-seen-count">{{localize "COCAGENCY.Common.SeenBy"}} {{n.seenCount}}/{{n.seenTotal}}</span>
               <textarea class="coc-agency-note" rows="2" placeholder="{{localize 'COCAGENCY.Npc.NotePlaceholder'}}" data-field="note" data-session-id="{{n.sessionId}}" data-npc-id="{{n.id}}">{{n.note}}</textarea>
               <div class="coc-agency-visibility">
                 <label class="coc-agency-chip coc-agency-chip-sm {{#if n.visibleAll}}active{{/if}}">
@@ -328,16 +402,189 @@
               <p class="coc-agency-empty">{{localize "COCAGENCY.Office.NoStaff"}}</p>
               {{/each}}
             </div>
+
+            <div class="coc-agency-section-header">
+              <h4><i class="fa-solid fa-user-tie"></i> {{localize "COCAGENCY.Office.Assigned"}}</h4>
+            </div>
+            {{#if @root.isGM}}
+            <div class="coc-agency-dropzone" data-dropzone="office-assignment" data-society-id="{{societyId}}" data-office-id="{{id}}">
+              <i class="fa-solid fa-arrow-pointer"></i> {{localize "COCAGENCY.Office.AssignedDropHint"}}
+            </div>
+            {{/if}}
+            <div class="coc-agency-cards">
+              {{#each assignedActors as |a|}}
+              <div class="coc-agency-card coc-agency-card-compact {{#if a.isMine}}coc-agency-card-mine{{/if}}">
+                <div class="coc-agency-card-thumb"><img src="{{a.img}}" alt="{{a.name}}" /></div>
+                <div class="coc-agency-card-body">
+                  <strong>{{a.name}}</strong>
+                  {{#if a.isMine}}<span class="coc-agency-mine-label">{{localize "COCAGENCY.Office.YourCharacter"}}</span>{{/if}}
+                </div>
+                {{#if @root.isGM}}
+                <div class="coc-agency-card-actions">
+                  <button type="button" class="coc-agency-btn coc-agency-btn-sm coc-agency-btn-danger" data-action="removeOfficeAssignment" data-society-id="{{../societyId}}" data-office-id="{{../id}}" data-actor-uuid="{{a.uuid}}" title="{{localize 'COCAGENCY.Common.Delete'}}">
+                    <i class="fa-solid fa-trash"></i>
+                  </button>
+                </div>
+                {{/if}}
+              </div>
+              {{else}}
+              <p class="coc-agency-empty">{{localize "COCAGENCY.Office.NoAssigned"}}</p>
+              {{/each}}
+            </div>
           </div>
           {{/with}}
           {{/if}}
         </div>
+      </div>
+
+      <div class="coc-agency-section">
+        <div class="coc-agency-section-header">
+          <h3><i class="fa-solid fa-box-archive"></i> {{localize "COCAGENCY.Equipment.Title"}}</h3>
+          {{#if @root.isGM}}
+          <button type="button" class="coc-agency-btn coc-agency-btn-sm" data-action="addEquipmentItem" data-society-id="{{id}}">
+            <i class="fa-solid fa-plus"></i> {{localize "COCAGENCY.Equipment.Create"}}
+          </button>
+          {{/if}}
+        </div>
+        <div class="coc-agency-cards">
+          {{#each equipment as |e|}}
+          <div class="coc-agency-card">
+            <div class="coc-agency-card-thumb">
+              {{#if e.img}}<img src="{{e.img}}" alt="{{e.name}}" />{{else}}<i class="fa-solid fa-box coc-agency-card-icon"></i>{{/if}}
+            </div>
+            <div class="coc-agency-card-body">
+              {{#if @root.isGM}}
+              <input type="text" class="coc-agency-title-input" value="{{e.name}}" data-field="name" data-society-id="{{e.societyId}}" data-item-id="{{e.id}}" />
+              <textarea class="coc-agency-note" rows="2" placeholder="{{localize 'COCAGENCY.Equipment.DescriptionPlaceholder'}}" data-field="description" data-society-id="{{e.societyId}}" data-item-id="{{e.id}}">{{e.description}}</textarea>
+              {{else}}
+              <strong>{{e.name}}</strong>
+              {{#if e.description}}<p class="coc-agency-note-readonly">{{e.description}}</p>{{/if}}
+              {{/if}}
+            </div>
+            <div class="coc-agency-card-actions">
+              <button type="button" class="coc-agency-btn coc-agency-btn-sm" data-action="orderEquipment" data-society-id="{{e.societyId}}" data-item-id="{{e.id}}">
+                <i class="fa-solid fa-cart-shopping"></i> {{localize "COCAGENCY.Equipment.Order"}}
+              </button>
+              {{#if @root.isGM}}
+              <button type="button" class="coc-agency-btn coc-agency-btn-sm" data-action="setEquipmentImage" data-society-id="{{e.societyId}}" data-item-id="{{e.id}}">
+                <i class="fa-solid fa-image"></i>
+              </button>
+              <button type="button" class="coc-agency-btn coc-agency-btn-sm coc-agency-btn-danger" data-action="deleteEquipmentItem" data-society-id="{{e.societyId}}" data-item-id="{{e.id}}">
+                <i class="fa-solid fa-trash"></i>
+              </button>
+              {{/if}}
+            </div>
+          </div>
+          {{else}}
+          <p class="coc-agency-empty">{{localize "COCAGENCY.Equipment.Empty"}}</p>
+          {{/each}}
+        </div>
+
+        {{#if orders.length}}
+        <table class="coc-agency-orders">
+          <thead>
+            <tr>
+              <th>{{localize "COCAGENCY.Equipment.Item"}}</th>
+              {{#if @root.isGM}}<th>{{localize "COCAGENCY.Equipment.RequestedBy"}}</th>{{/if}}
+              <th>{{localize "COCAGENCY.Equipment.Status"}}</th>
+              <th>{{localize "COCAGENCY.Equipment.Eta"}}</th>
+              {{#if @root.isGM}}<th></th>{{/if}}
+            </tr>
+          </thead>
+          <tbody>
+            {{#each orders as |o|}}
+            <tr>
+              <td>{{o.itemName}}</td>
+              {{#if @root.isGM}}<td>{{o.requestedByName}}</td>{{/if}}
+              <td>
+                {{#if @root.isGM}}
+                <span class="coc-agency-order-status coc-agency-order-status-{{o.status}}">{{o.statusLabel}}</span>
+                <div class="coc-agency-order-status-buttons">
+                  <button type="button" class="coc-agency-btn coc-agency-btn-sm" data-action="setOrderStatus" data-society-id="{{o.societyId}}" data-order-id="{{o.id}}" data-status="approved">{{localize "COCAGENCY.Equipment.StatusApproved"}}</button>
+                  <button type="button" class="coc-agency-btn coc-agency-btn-sm" data-action="setOrderStatus" data-society-id="{{o.societyId}}" data-order-id="{{o.id}}" data-status="delivered">{{localize "COCAGENCY.Equipment.StatusDelivered"}}</button>
+                  <button type="button" class="coc-agency-btn coc-agency-btn-sm coc-agency-btn-danger" data-action="setOrderStatus" data-society-id="{{o.societyId}}" data-order-id="{{o.id}}" data-status="denied">{{localize "COCAGENCY.Equipment.StatusDenied"}}</button>
+                </div>
+                {{else}}
+                <span class="coc-agency-order-status coc-agency-order-status-{{o.status}}">{{o.statusLabel}}</span>
+                {{/if}}
+              </td>
+              <td>
+                {{#if @root.isGM}}
+                <input type="text" value="{{o.eta}}" data-field="eta" data-society-id="{{o.societyId}}" data-order-id="{{o.id}}" placeholder="{{localize 'COCAGENCY.Equipment.EtaPlaceholder'}}" />
+                {{else}}
+                {{o.eta}}
+                {{/if}}
+              </td>
+              {{#if @root.isGM}}
+              <td><i class="fa-solid fa-trash coc-agency-icon-btn" data-action="deleteOrder" data-society-id="{{o.societyId}}" data-order-id="{{o.id}}"></i></td>
+              {{/if}}
+            </tr>
+            {{/each}}
+          </tbody>
+        </table>
+        {{/if}}
       </div>
       {{/with}}
       {{else}}
       <p class="coc-agency-empty">{{localize "COCAGENCY.Society.SelectPrompt"}}</p>
       {{/if}}
     </div>
+  </div>
+</section>
+
+<section class="coc-agency-panel {{#if (eq tab "network")}}active{{/if}}" data-tab="network">
+  <div class="coc-agency-network">
+    {{#if isGM}}
+    <div class="coc-agency-section-actions coc-agency-network-actions">
+      <button type="button" class="coc-agency-btn coc-agency-btn-sm" data-action="addRelationship">
+        <i class="fa-solid fa-plus"></i> {{localize "COCAGENCY.Network.AddRelationship"}}
+      </button>
+    </div>
+    {{/if}}
+    {{#if network.hasNodes}}
+    <div class="coc-agency-network-graph">
+      <svg class="coc-agency-network-svg" preserveAspectRatio="none">
+        {{#each network.edges as |edge|}}
+        <line x1="{{edge.x1}}%" y1="{{edge.y1}}%" x2="{{edge.x2}}%" y2="{{edge.y2}}%" />
+        <text x="{{edge.midX}}%" y="{{edge.midY}}%">{{edge.label}}</text>
+        {{/each}}
+      </svg>
+      {{#each network.nodes as |node|}}
+      <div class="coc-agency-network-node" style="left: {{node.x}}%; top: {{node.y}}%;">
+        {{#if node.canOpen}}
+        <img src="{{node.img}}" alt="{{node.name}}" data-action="openActorSheet" data-actor-uuid="{{node.actorUuid}}" />
+        {{else}}
+        <img src="{{node.img}}" alt="{{node.name}}" />
+        {{/if}}
+        <span>{{node.name}}</span>
+      </div>
+      {{/each}}
+    </div>
+    {{else}}
+    <p class="coc-agency-empty">{{localize "COCAGENCY.Network.Empty"}}</p>
+    {{/if}}
+    {{#if isGM}}
+    <ul class="coc-agency-relationship-list">
+      {{#each network.edges as |edge|}}
+      <li>{{edge.label}} <i class="fa-solid fa-trash coc-agency-icon-btn" data-action="deleteRelationship" data-relationship-id="{{edge.id}}"></i></li>
+      {{/each}}
+    </ul>
+    {{/if}}
+  </div>
+</section>
+
+<section class="coc-agency-panel {{#if (eq tab "timeline")}}active{{/if}}" data-tab="timeline">
+  <div class="coc-agency-timeline">
+    {{#each sessions as |session|}}
+    {{#if session.recap}}
+    <div class="coc-agency-timeline-entry">
+      <h3>{{session.name}}</h3>
+      <p>{{session.recap}}</p>
+    </div>
+    {{/if}}
+    {{else}}
+    <p class="coc-agency-empty">{{localize "COCAGENCY.Timeline.Empty"}}</p>
+    {{/each}}
   </div>
 </section>
 </div>

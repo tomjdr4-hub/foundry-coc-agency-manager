@@ -1,6 +1,8 @@
 import {
   MODULE_ID,
+  VISIBILITY_ALL,
   getData,
+  saveData,
   mutate,
   getPlayerUsers,
   isVisibleTo,
@@ -13,21 +15,29 @@ import {
   newNpcEntry,
   newSociety,
   newOffice,
+  newEquipmentItem,
+  newOrder,
+  newRelationship,
   findSession,
   findHandout,
   findNpc,
   findSociety,
-  findOffice
+  findOffice,
+  findEquipmentItem,
+  findOrder,
+  pushRevealLogEntry,
+  unassignActorEverywhere
 } from "../data.js";
 import {
   getDroppedDocumentData,
   resolveActor,
+  resolveScene,
   resolveHandoutDisplay,
   openSessionNotesJournal,
   ensureNpcNotePage,
   pickImage
 } from "../helpers.js";
-import { pushHandoutToPlayers, requestNpcNotePage } from "../socket.js";
+import { pushHandoutToPlayers, requestNpcNotePage, markItemsSeen, requestEquipmentOrder } from "../socket.js";
 import { HandoutLightboxApp } from "./lightbox-app.js";
 
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
@@ -77,7 +87,22 @@ export class AgencyApp extends HandlebarsApplicationMixin(ApplicationV2) {
       toggleOfficeAll: this.prototype.toggleOfficeAll,
       toggleOfficeUser: this.prototype.toggleOfficeUser,
       removeOfficeNpc: this.prototype.removeOfficeNpc,
-      startPlacingOffice: this.prototype.startPlacingOffice
+      startPlacingOffice: this.prototype.startPlacingOffice,
+      removeOfficeAssignment: this.prototype.removeOfficeAssignment,
+      linkScene: this.prototype.linkScene,
+      unlinkScene: this.prototype.unlinkScene,
+      activateScene: this.prototype.activateScene,
+      addEquipmentItem: this.prototype.addEquipmentItem,
+      deleteEquipmentItem: this.prototype.deleteEquipmentItem,
+      setEquipmentImage: this.prototype.setEquipmentImage,
+      orderEquipment: this.prototype.orderEquipment,
+      setOrderStatus: this.prototype.setOrderStatus,
+      deleteOrder: this.prototype.deleteOrder,
+      addRelationship: this.prototype.addRelationship,
+      deleteRelationship: this.prototype.deleteRelationship,
+      jumpToResult: this.prototype.jumpToResult,
+      exportData: this.prototype.exportData,
+      importData: this.prototype.importData
     }
   };
 
@@ -90,8 +115,12 @@ export class AgencyApp extends HandlebarsApplicationMixin(ApplicationV2) {
     selectedSessionId: null,
     selectedSocietyId: null,
     selectedOfficeId: null,
-    placingOffice: false
+    placingOffice: false,
+    searchQuery: "",
+    searchFocusPending: false
   };
+
+  #pendingSeen = new Set();
 
   static #openInstances = new Set();
 
@@ -147,27 +176,132 @@ export class AgencyApp extends HandlebarsApplicationMixin(ApplicationV2) {
       selectedSociety,
       selectedOfficeId: this.state.selectedOfficeId,
       selectedOffice: selectedSociety?.offices.find((o) => o.id === this.state.selectedOfficeId) ?? null,
-      placingOffice: this.state.placingOffice
+      placingOffice: this.state.placingOffice,
+      network: this._networkVM(data, isGM, user),
+      searchQuery: this.state.searchQuery,
+      searchResults: this._computeSearchResults(sessions, societies)
     };
   }
 
+  _computeSearchResults(sessions, societies) {
+    const query = this.state.searchQuery?.trim().toLowerCase();
+    if (!query) return [];
+    const results = [];
+    for (const session of sessions) {
+      for (const h of session.handouts) {
+        if (h.title.toLowerCase().includes(query)) {
+          results.push({ type: "handout", label: h.title, parent: session.name, sessionId: session.id });
+        }
+      }
+      for (const n of session.npcs) {
+        if (n.name.toLowerCase().includes(query)) {
+          results.push({ type: "npc", label: n.name, parent: session.name, sessionId: session.id });
+        }
+      }
+    }
+    for (const society of societies) {
+      for (const o of society.offices) {
+        if (o.name.toLowerCase().includes(query)) {
+          results.push({ type: "office", label: o.name, parent: society.name, societyId: society.id, officeId: o.id });
+        }
+      }
+      for (const e of society.equipment) {
+        if (e.name.toLowerCase().includes(query)) {
+          results.push({ type: "equipment", label: e.name, parent: society.name, societyId: society.id });
+        }
+      }
+    }
+    return results.slice(0, 20);
+  }
+
+  /** Builds the visual network of tracked NPCs (nodes on a circle) and their relationships (edges). */
+  _networkVM(data, isGM, user) {
+    const nodesMap = new Map();
+    const addNode = (actorUuid) => {
+      if (!actorUuid || nodesMap.has(actorUuid)) return;
+      const actor = resolveActor(actorUuid);
+      nodesMap.set(actorUuid, {
+        actorUuid,
+        name: actor?.name ?? game.i18n.localize("COCAGENCY.Npc.Unknown"),
+        img: actor?.img ?? "icons/svg/mystery-man.svg",
+        canOpen: !!actor && (isGM || actor.testUserPermission(user, "LIMITED"))
+      });
+    };
+
+    for (const session of data.sessions) {
+      if (!isGM && !isVisibleTo(session, user)) continue;
+      for (const npc of session.npcs) {
+        if (isGM || isVisibleToUser(npc, user.id)) addNode(npc.actorUuid);
+      }
+    }
+    for (const society of data.societies) {
+      for (const office of society.offices) {
+        if (!isGM && !isVisibleTo(office, user)) continue;
+        for (const uuid of office.npcUuids) addNode(uuid);
+      }
+    }
+
+    const nodes = Array.from(nodesMap.values());
+    const total = Math.max(nodes.length, 1);
+    const radius = 38;
+    nodes.forEach((node, i) => {
+      const angle = (2 * Math.PI * i) / total - Math.PI / 2;
+      node.x = Math.round((50 + radius * Math.cos(angle)) * 10) / 10;
+      node.y = Math.round((50 + radius * Math.sin(angle)) * 10) / 10;
+    });
+
+    const edges = data.npcRelationships
+      .filter((r) => nodesMap.has(r.fromActorUuid) && nodesMap.has(r.toActorUuid))
+      .map((r) => {
+        const from = nodesMap.get(r.fromActorUuid);
+        const to = nodesMap.get(r.toActorUuid);
+        return {
+          id: r.id,
+          label: r.label,
+          x1: from.x,
+          y1: from.y,
+          x2: to.x,
+          y2: to.y,
+          midX: Math.round(((from.x + to.x) / 2) * 10) / 10,
+          midY: Math.round(((from.y + to.y) / 2) * 10) / 10
+        };
+      });
+
+    return { nodes, edges, hasNodes: nodes.length > 0 };
+  }
+
   _sessionVM(session, isGM, user, players) {
+    const scene = resolveScene(session.sceneUuid);
     return {
       id: session.id,
       name: session.name,
       journalUuid: session.journalUuid,
+      recap: session.recap,
+      sceneUuid: session.sceneUuid,
+      sceneName: scene?.name ?? null,
       visibleAll: isVisibleToAll(session),
       playerChecks: players.map((p) => ({ ...p, checked: isVisibleToUser(session, p.id) })),
       handouts: session.handouts
         .filter((h) => isGM || isVisibleToUser(h, user.id))
-        .map((h) => this._handoutVM(session.id, h, players)),
+        .map((h) => this._handoutVM(session.id, h, isGM, user, players)),
       npcs: session.npcs
         .filter((n) => isGM || isVisibleToUser(n, user.id))
-        .map((n) => this._npcVM(session.id, n, isGM, user, players))
+        .map((n) => this._npcVM(session.id, n, isGM, user, players)),
+      revealLog: session.revealLog.map((entry) => ({
+        id: entry.id,
+        handoutTitle: entry.handoutTitle,
+        at: new Date(entry.at).toLocaleString(),
+        targets:
+          entry.targetUserIds === VISIBILITY_ALL
+            ? game.i18n.localize("COCAGENCY.Visibility.All")
+            : entry.targetUserIds.map((id) => game.users.get(id)?.name ?? "?").join(", ")
+      }))
     };
   }
 
-  _handoutVM(sessionId, handout, players) {
+  _handoutVM(sessionId, handout, isGM, user, players) {
+    const allPlayerIds = players.map((p) => p.id);
+    const eligibleIds = handout.visibility === VISIBILITY_ALL ? allPlayerIds : handout.visibility;
     return {
       sessionId,
       id: handout.id,
@@ -176,12 +310,17 @@ export class AgencyApp extends HandlebarsApplicationMixin(ApplicationV2) {
       img: handout.img,
       pageUuid: handout.pageUuid,
       visibleAll: isVisibleToAll(handout),
-      playerChecks: players.map((p) => ({ ...p, checked: isVisibleToUser(handout, p.id) }))
+      playerChecks: players.map((p) => ({ ...p, checked: isVisibleToUser(handout, p.id) })),
+      isNew: !isGM && !handout.seenBy.includes(user.id),
+      seenCount: eligibleIds.filter((id) => handout.seenBy.includes(id)).length,
+      seenTotal: eligibleIds.length
     };
   }
 
   _npcVM(sessionId, npc, isGM, user, players) {
     const actor = resolveActor(npc.actorUuid);
+    const allPlayerIds = players.map((p) => p.id);
+    const eligibleIds = npc.visibility === VISIBILITY_ALL ? allPlayerIds : npc.visibility;
     return {
       sessionId,
       id: npc.id,
@@ -191,7 +330,10 @@ export class AgencyApp extends HandlebarsApplicationMixin(ApplicationV2) {
       img: actor?.img ?? "icons/svg/mystery-man.svg",
       canOpen: !!actor && (isGM || actor.testUserPermission(user, "LIMITED")),
       visibleAll: isVisibleToAll(npc),
-      playerChecks: players.map((p) => ({ ...p, checked: isVisibleToUser(npc, p.id) }))
+      playerChecks: players.map((p) => ({ ...p, checked: isVisibleToUser(npc, p.id) })),
+      isNew: !isGM && !npc.seenBy.includes(user.id),
+      seenCount: eligibleIds.filter((id) => npc.seenBy.includes(id)).length,
+      seenTotal: eligibleIds.length
     };
   }
 
@@ -204,11 +346,20 @@ export class AgencyApp extends HandlebarsApplicationMixin(ApplicationV2) {
       mapImage: society.mapImage,
       offices: society.offices
         .filter((o) => isGM || isVisibleTo(o, user))
-        .map((o) => this._officeVM(society.id, o, players))
+        .map((o) => this._officeVM(society.id, o, players, isGM, user)),
+      equipment: society.equipment.map((e) => ({ societyId: society.id, id: e.id, name: e.name, description: e.description, img: e.img })),
+      orders: society.orders
+        .filter((o) => isGM || o.requestedBy === user.id)
+        .map((o) => ({
+          ...o,
+          societyId: society.id,
+          statusLabel: game.i18n.localize(`COCAGENCY.Equipment.Status${o.status.charAt(0).toUpperCase()}${o.status.slice(1)}`)
+        }))
+        .sort((a, b) => b.requestedAt - a.requestedAt)
     };
   }
 
-  _officeVM(societyId, office, players) {
+  _officeVM(societyId, office, players, isGM, user) {
     return {
       societyId,
       id: office.id,
@@ -224,6 +375,15 @@ export class AgencyApp extends HandlebarsApplicationMixin(ApplicationV2) {
       npcs: office.npcUuids.map((uuid) => {
         const actor = resolveActor(uuid);
         return { uuid, name: actor?.name ?? "?", img: actor?.img ?? "icons/svg/mystery-man.svg" };
+      }),
+      assignedActors: office.assignedActorUuids.map((uuid) => {
+        const actor = resolveActor(uuid);
+        return {
+          uuid,
+          name: actor?.name ?? "?",
+          img: actor?.img ?? "icons/svg/mystery-man.svg",
+          isMine: !!actor && !isGM && actor.testUserPermission(user, "OWNER")
+        };
       })
     };
   }
@@ -240,9 +400,61 @@ export class AgencyApp extends HandlebarsApplicationMixin(ApplicationV2) {
       el.addEventListener("dragover", (event) => event.preventDefault());
       el.addEventListener("drop", (event) => this.onDropOfficeNpc(event, el.dataset.societyId, el.dataset.officeId));
     }
+    for (const el of this.element.querySelectorAll("[data-dropzone='office-assignment']")) {
+      el.addEventListener("dragover", (event) => event.preventDefault());
+      el.addEventListener("drop", (event) => this.onDropOfficeAssignment(event, el.dataset.societyId, el.dataset.officeId));
+    }
     for (const el of this.element.querySelectorAll("[data-map]")) {
       el.addEventListener("click", (event) => this.onMapClick(event, el));
     }
+
+    const searchInput = this.element.querySelector("[data-search-input]");
+    if (searchInput) {
+      searchInput.addEventListener("input", (event) => this.onSearchInput(event));
+      if (this.state.searchFocusPending) {
+        searchInput.focus();
+        searchInput.setSelectionRange(searchInput.value.length, searchInput.value.length);
+        this.state.searchFocusPending = false;
+      }
+    }
+
+    const importInput = this.element.querySelector("[data-file-input='import']");
+    importInput?.addEventListener("change", (event) => this.onImportFileChange(event));
+
+    if (!game.user.isGM) this._autoMarkSeen(context);
+  }
+
+  /** Reports newly-visible handouts/NPCs as seen (batched per session) so the "new" badge clears everywhere. */
+  _autoMarkSeen(context) {
+    for (const session of context.sessions) {
+      const handoutIds = session.handouts
+        .filter((h) => h.isNew && !this.#pendingSeen.has(`h:${h.id}`))
+        .map((h) => h.id);
+      const npcIds = session.npcs.filter((n) => n.isNew && !this.#pendingSeen.has(`n:${n.id}`)).map((n) => n.id);
+      handoutIds.forEach((id) => this.#pendingSeen.add(`h:${id}`));
+      npcIds.forEach((id) => this.#pendingSeen.add(`n:${id}`));
+      if (handoutIds.length || npcIds.length) markItemsSeen(session.id, handoutIds, npcIds);
+    }
+  }
+
+  onSearchInput(event) {
+    this.state.searchQuery = event.currentTarget.value;
+    this.state.searchFocusPending = true;
+    this.render();
+  }
+
+  jumpToResult(event, target) {
+    const { type, sessionId, societyId, officeId } = target.dataset;
+    this.state.searchQuery = "";
+    if (type === "handout" || type === "npc") {
+      this.state.tab = "sessions";
+      this.state.selectedSessionId = sessionId;
+    } else if (type === "office" || type === "equipment") {
+      this.state.tab = "society";
+      this.state.selectedSocietyId = societyId;
+      if (officeId) this.state.selectedOfficeId = officeId;
+    }
+    this.render();
   }
 
   /* -------------------------------------------- */
@@ -251,11 +463,13 @@ export class AgencyApp extends HandlebarsApplicationMixin(ApplicationV2) {
 
   async onFieldChange(event) {
     const el = event.currentTarget;
-    const { field, sessionId, handoutId, npcId, societyId, officeId } = el.dataset;
+    const { field, sessionId, handoutId, npcId, societyId, officeId, itemId, orderId } = el.dataset;
     const value = el.type === "checkbox" ? el.checked : el.value;
     await mutate((data) => {
       let obj = null;
       if (officeId && societyId) obj = findOffice(data, societyId, officeId);
+      else if (itemId && societyId) obj = findEquipmentItem(data, societyId, itemId);
+      else if (orderId && societyId) obj = findOrder(data, societyId, orderId);
       else if (npcId && sessionId) obj = findNpc(data, sessionId, npcId);
       else if (handoutId && sessionId) obj = findHandout(data, sessionId, handoutId);
       else if (societyId) obj = findSociety(data, societyId);
@@ -431,6 +645,12 @@ export class AgencyApp extends HandlebarsApplicationMixin(ApplicationV2) {
     if (!handout) return;
     const display = await resolveHandoutDisplay(handout);
     pushHandoutToPlayers(display, handout.visibility);
+    await mutate((data) => {
+      const session = findSession(data, sessionId);
+      if (session) {
+        pushRevealLogEntry(session, { handoutTitle: handout.title, targetUserIds: handout.visibility });
+      }
+    });
     new HandoutLightboxApp(display).render(true);
   }
 
@@ -648,6 +868,29 @@ export class AgencyApp extends HandlebarsApplicationMixin(ApplicationV2) {
     this.render();
   }
 
+  async onDropOfficeAssignment(event, societyId, officeId) {
+    event.preventDefault();
+    const dropped = getDroppedDocumentData(event);
+    if (dropped?.type !== "Actor") return;
+    const actor = await fromUuid(dropped.uuid);
+    if (!actor) return;
+    await mutate((data) => {
+      unassignActorEverywhere(data, dropped.uuid);
+      const office = findOffice(data, societyId, officeId);
+      office?.assignedActorUuids.push(dropped.uuid);
+    });
+    this.render();
+  }
+
+  async removeOfficeAssignment(event, target) {
+    const { societyId, officeId, actorUuid } = target.dataset;
+    await mutate((data) => {
+      const o = findOffice(data, societyId, officeId);
+      if (o) o.assignedActorUuids = o.assignedActorUuids.filter((u) => u !== actorUuid);
+    });
+    this.render();
+  }
+
   startPlacingOffice() {
     this.state.placingOffice = true;
     this.render();
@@ -668,6 +911,209 @@ export class AgencyApp extends HandlebarsApplicationMixin(ApplicationV2) {
       }
     });
     this.state.placingOffice = false;
+    this.render();
+  }
+
+  /* -------------------------------------------- */
+  /* Scene link                                     */
+  /* -------------------------------------------- */
+
+  async linkScene(event, target) {
+    const { sessionId } = target.dataset;
+    if (!game.scenes.size) {
+      ui.notifications.warn(game.i18n.localize("COCAGENCY.Session.NoScenes"));
+      return;
+    }
+    const options = game.scenes.map((s) => `<option value="${s.uuid}">${escapeHTML(s.name)}</option>`).join("");
+    const result = await foundry.applications.api.DialogV2.wait({
+      window: { title: game.i18n.localize("COCAGENCY.Session.PickSceneTitle") },
+      content: `<div class="form-group"><label>${game.i18n.localize("COCAGENCY.Session.Scene")}</label><select name="sceneUuid">${options}</select></div>`,
+      buttons: [
+        {
+          action: "ok",
+          label: game.i18n.localize("COCAGENCY.Common.Add"),
+          default: true,
+          callback: (ev, button) => new FormDataExtended(button.form).object
+        },
+        { action: "cancel", label: game.i18n.localize("COCAGENCY.Common.Cancel") }
+      ],
+      rejectClose: false
+    });
+    if (!result?.sceneUuid) return;
+    await mutate((data) => {
+      const session = findSession(data, sessionId);
+      if (session) session.sceneUuid = result.sceneUuid;
+    });
+    this.render();
+  }
+
+  async unlinkScene(event, target) {
+    const { sessionId } = target.dataset;
+    await mutate((data) => {
+      const session = findSession(data, sessionId);
+      if (session) session.sceneUuid = null;
+    });
+    this.render();
+  }
+
+  async activateScene(event, target) {
+    const { sessionId } = target.dataset;
+    const session = findSession(getData(), sessionId);
+    const scene = session?.sceneUuid ? await fromUuid(session.sceneUuid) : null;
+    await scene?.activate();
+  }
+
+  /* -------------------------------------------- */
+  /* Equipment & orders                             */
+  /* -------------------------------------------- */
+
+  async addEquipmentItem(event, target) {
+    const { societyId } = target.dataset;
+    await mutate((data) => {
+      findSociety(data, societyId)?.equipment.push(newEquipmentItem());
+    });
+    this.render();
+  }
+
+  async deleteEquipmentItem(event, target) {
+    const { societyId, itemId } = target.dataset;
+    await mutate((data) => {
+      const society = findSociety(data, societyId);
+      if (society) society.equipment = society.equipment.filter((e) => e.id !== itemId);
+    });
+    this.render();
+  }
+
+  async setEquipmentImage(event, target) {
+    const { societyId, itemId } = target.dataset;
+    const current = findEquipmentItem(getData(), societyId, itemId)?.img ?? "";
+    const path = await pickImage(current);
+    if (path === undefined) return;
+    await mutate((data) => {
+      const item = findEquipmentItem(data, societyId, itemId);
+      if (item) item.img = path;
+    });
+    this.render();
+  }
+
+  /**
+   * A player ordering equipment can't write world data directly, so the request is relayed to
+   * a connected GM's client (same pattern as NPC note pages); the GM never needs to approve the
+   * relay itself, only the resulting order.
+   */
+  async orderEquipment(event, target) {
+    const { societyId, itemId } = target.dataset;
+    if (game.user.isGM) {
+      const item = findEquipmentItem(getData(), societyId, itemId);
+      if (!item) return;
+      await mutate((data) => {
+        const society = findSociety(data, societyId);
+        society?.orders.push(
+          newOrder({ itemId: item.id, itemName: item.name, requestedBy: game.user.id, requestedByName: game.user.name })
+        );
+      });
+      this.render();
+      return;
+    }
+    if (!game.users.some((u) => u.isGM && u.active)) {
+      ui.notifications.warn(game.i18n.localize("COCAGENCY.Equipment.NoGMOnline"));
+      return;
+    }
+    requestEquipmentOrder(societyId, itemId);
+    ui.notifications.info(game.i18n.localize("COCAGENCY.Equipment.OrderRequested"));
+  }
+
+  async setOrderStatus(event, target) {
+    const { societyId, orderId, status } = target.dataset;
+    await mutate((data) => {
+      const order = findOrder(data, societyId, orderId);
+      if (order) order.status = status;
+    });
+    this.render();
+  }
+
+  async deleteOrder(event, target) {
+    const { societyId, orderId } = target.dataset;
+    await mutate((data) => {
+      const society = findSociety(data, societyId);
+      if (society) society.orders = society.orders.filter((o) => o.id !== orderId);
+    });
+    this.render();
+  }
+
+  /* -------------------------------------------- */
+  /* NPC relationship network                       */
+  /* -------------------------------------------- */
+
+  async addRelationship() {
+    const { nodes } = this._networkVM(getData(), true, game.user);
+    if (nodes.length < 2) {
+      ui.notifications.warn(game.i18n.localize("COCAGENCY.Network.NotEnoughNpcs"));
+      return;
+    }
+    const options = nodes.map((n) => `<option value="${n.actorUuid}">${escapeHTML(n.name)}</option>`).join("");
+    const result = await foundry.applications.api.DialogV2.wait({
+      window: { title: game.i18n.localize("COCAGENCY.Network.AddRelationship") },
+      content: `
+        <div class="form-group"><label>${game.i18n.localize("COCAGENCY.Network.From")}</label><select name="fromActorUuid">${options}</select></div>
+        <div class="form-group"><label>${game.i18n.localize("COCAGENCY.Network.To")}</label><select name="toActorUuid">${options}</select></div>
+        <div class="form-group"><label>${game.i18n.localize("COCAGENCY.Network.Label")}</label>
+          <input type="text" name="label" placeholder="${game.i18n.localize("COCAGENCY.Network.LabelPlaceholder")}" /></div>`,
+      buttons: [
+        {
+          action: "ok",
+          label: game.i18n.localize("COCAGENCY.Common.Add"),
+          default: true,
+          callback: (ev, button) => new FormDataExtended(button.form).object
+        },
+        { action: "cancel", label: game.i18n.localize("COCAGENCY.Common.Cancel") }
+      ],
+      rejectClose: false
+    });
+    if (!result?.fromActorUuid || !result?.toActorUuid || result.fromActorUuid === result.toActorUuid) return;
+    await mutate((data) => data.npcRelationships.push(newRelationship(result)));
+    this.render();
+  }
+
+  async deleteRelationship(event, target) {
+    const { relationshipId } = target.dataset;
+    await mutate((data) => {
+      data.npcRelationships = data.npcRelationships.filter((r) => r.id !== relationshipId);
+    });
+    this.render();
+  }
+
+  /* -------------------------------------------- */
+  /* Export / Import                                */
+  /* -------------------------------------------- */
+
+  exportData() {
+    const data = getData();
+    foundry.utils.saveDataToFile(JSON.stringify(data, null, 2), "application/json", "coc-agency-manager.json");
+  }
+
+  importData() {
+    this.element.querySelector("[data-file-input='import']")?.click();
+  }
+
+  async onImportFileChange(event) {
+    const file = event.currentTarget.files?.[0];
+    event.currentTarget.value = "";
+    if (!file) return;
+    let parsed;
+    try {
+      parsed = JSON.parse(await file.text());
+    } catch (err) {
+      ui.notifications.error(game.i18n.localize("COCAGENCY.Export.InvalidFile"));
+      return;
+    }
+    const confirmed = await foundry.applications.api.DialogV2.confirm({
+      window: { title: game.i18n.localize("COCAGENCY.Export.ImportTitle") },
+      content: `<p>${game.i18n.localize("COCAGENCY.Export.ImportConfirm")}</p>`,
+      rejectClose: false
+    });
+    if (!confirmed) return;
+    await saveData(parsed);
     this.render();
   }
 }

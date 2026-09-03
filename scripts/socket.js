@@ -1,4 +1,15 @@
-import { SOCKET_NAME, VISIBILITY_ALL, getData, mutate, findSession, findNpc } from "./data.js";
+import {
+  SOCKET_NAME,
+  VISIBILITY_ALL,
+  getData,
+  mutate,
+  findSession,
+  findNpc,
+  findHandout,
+  findSociety,
+  findEquipmentItem,
+  newOrder
+} from "./data.js";
 import { ensureNpcNotePage } from "./helpers.js";
 import { HandoutLightboxApp } from "./apps/lightbox-app.js";
 
@@ -29,6 +40,23 @@ function notifyNpcNoteReady(pageUuid, targetUserId) {
   game.socket.emit(SOCKET_NAME, {
     action: "npcNoteReady",
     payload: { pageUuid, targetUserId }
+  });
+}
+
+/** Tells a connected GM's client to record that the current user has seen the given items. */
+export function markItemsSeen(sessionId, handoutIds, npcIds) {
+  if (!handoutIds.length && !npcIds.length) return;
+  game.socket.emit(SOCKET_NAME, {
+    action: "markSeen",
+    payload: { sessionId, handoutIds, npcIds, requesterId: game.user.id }
+  });
+}
+
+/** Asks a connected GM's client to log an equipment order on behalf of the current player. */
+export function requestEquipmentOrder(societyId, itemId) {
+  game.socket.emit(SOCKET_NAME, {
+    action: "requestEquipmentOrder",
+    payload: { societyId, itemId, requesterId: game.user.id }
   });
 }
 
@@ -63,6 +91,33 @@ export function registerSocketListener() {
         page = await fromUuid(pageUuid);
       }
       page?.sheet.render(true);
+    } else if (action === "markSeen") {
+      if (!game.user.isGM) return;
+      const { sessionId, handoutIds, npcIds, requesterId } = payload ?? {};
+      await mutate((data) => {
+        const session = findSession(data, sessionId);
+        if (!session) return;
+        for (const id of handoutIds ?? []) {
+          const handout = findHandout(data, sessionId, id);
+          if (handout && !handout.seenBy.includes(requesterId)) handout.seenBy.push(requesterId);
+        }
+        for (const id of npcIds ?? []) {
+          const npc = findNpc(data, sessionId, id);
+          if (npc && !npc.seenBy.includes(requesterId)) npc.seenBy.push(requesterId);
+        }
+      });
+    } else if (action === "requestEquipmentOrder") {
+      if (!game.user.isGM) return;
+      const { societyId, itemId, requesterId } = payload ?? {};
+      const requester = game.users.get(requesterId);
+      const item = findEquipmentItem(getData(), societyId, itemId);
+      if (!requester || !item) return;
+      await mutate((data) => {
+        const society = findSociety(data, societyId);
+        society?.orders.push(
+          newOrder({ itemId: item.id, itemName: item.name, requestedBy: requester.id, requestedByName: requester.name })
+        );
+      });
     }
   });
 }

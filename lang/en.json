@@ -1,9 +1,23 @@
 {
   "COCAGENCY": {
     "App": { "Title": "Investigator Agency" },
-    "Tabs": { "Sessions": "Sessions", "Society": "Agency" },
-    "Common": { "Add": "Add", "Cancel": "Cancel", "Delete": "Delete" },
+    "Tabs": { "Sessions": "Sessions", "Society": "Agency", "Network": "Network", "Timeline": "Timeline" },
+    "Common": {
+      "Add": "Add",
+      "Cancel": "Cancel",
+      "Delete": "Delete",
+      "New": "New",
+      "SeenBy": "Seen by"
+    },
     "Visibility": { "All": "All", "SessionLabel": "Visible to:" },
+    "Search": { "Placeholder": "Search..." },
+    "Export": {
+      "Export": "Export data",
+      "Import": "Import data",
+      "InvalidFile": "Invalid file: not a valid JSON export.",
+      "ImportTitle": "Import data",
+      "ImportConfirm": "This replaces all current module data (sessions, agencies...) with the content of the imported file. Continue?"
+    },
     "Session": {
       "Create": "New session",
       "NewName": "New session",
@@ -12,7 +26,15 @@
       "Notes": "Session notes",
       "NotesJournalName": "Notes - {name}",
       "DeleteTitle": "Delete session",
-      "DeleteConfirm": "Delete this session along with all its handouts and NPCs? This cannot be undone."
+      "DeleteConfirm": "Delete this session along with all its handouts and NPCs? This cannot be undone.",
+      "LinkScene": "Link a scene",
+      "UnlinkScene": "Unlink",
+      "ActivateScene": "Activate",
+      "PickSceneTitle": "Pick a scene",
+      "Scene": "Scene",
+      "NoScenes": "No scene available in this world.",
+      "RecapPlaceholder": "Session recap, visible to players with access...",
+      "RevealLog": "Reveal history"
     },
     "Handout": {
       "Title": "Handouts",
@@ -60,9 +82,42 @@
       "PlacePin": "Place on map",
       "Staff": "Staff",
       "NoStaff": "No NPC assigned to this office.",
+      "Assigned": "Assigned investigators",
+      "AssignedDropHint": "Drag & drop a character here to assign it",
+      "NoAssigned": "No investigator assigned to this office.",
+      "YourCharacter": "Your character",
       "DeleteTitle": "Delete office",
       "DeleteConfirm": "Delete this office? This cannot be undone."
     },
+    "Equipment": {
+      "Title": "Agency equipment",
+      "Create": "Add equipment",
+      "NewName": "New equipment",
+      "DescriptionPlaceholder": "Equipment description",
+      "Order": "Order",
+      "Empty": "No equipment in the catalog.",
+      "Item": "Item",
+      "RequestedBy": "Requested by",
+      "Status": "Status",
+      "Eta": "ETA",
+      "EtaPlaceholder": "e.g. 3 days",
+      "StatusPending": "Pending",
+      "StatusApproved": "Approved",
+      "StatusDelivered": "Delivered",
+      "StatusDenied": "Denied",
+      "NoGMOnline": "No GM is currently connected to process this order.",
+      "OrderRequested": "Order sent to the GM."
+    },
+    "Network": {
+      "AddRelationship": "Add a relationship",
+      "From": "NPC",
+      "To": "Related to",
+      "Label": "Relationship",
+      "LabelPlaceholder": "e.g. knows, rival of, employed by...",
+      "NotEnoughNpcs": "You need at least two tracked NPCs (in a session or office) to create a relationship.",
+      "Empty": "No tracked NPC yet."
+    },
+    "Timeline": { "Empty": "No session recap yet." },
     "Lightbox": { "Title": "Document" }
   }
 }
