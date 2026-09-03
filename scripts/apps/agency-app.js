@@ -271,14 +271,14 @@ export class AgencyApp extends HandlebarsApplicationMixin(ApplicationV2) {
   }
 
   _sessionVM(session, isGM, user, players) {
-    const scene = resolveScene(session.sceneUuid);
     return {
       id: session.id,
       name: session.name,
       journalUuid: session.journalUuid,
       recap: session.recap,
-      sceneUuid: session.sceneUuid,
-      sceneName: scene?.name ?? null,
+      scenes: isGM
+        ? session.sceneUuids.map((uuid) => ({ uuid, name: resolveScene(uuid)?.name ?? "?" }))
+        : [],
       visibleAll: isVisibleToAll(session),
       playerChecks: players.map((p) => ({ ...p, checked: isVisibleToUser(session, p.id) })),
       handouts: session.handouts
@@ -920,11 +920,14 @@ export class AgencyApp extends HandlebarsApplicationMixin(ApplicationV2) {
 
   async linkScene(event, target) {
     const { sessionId } = target.dataset;
-    if (!game.scenes.size) {
+    const session = findSession(getData(), sessionId);
+    if (!session) return;
+    const available = game.scenes.filter((s) => !session.sceneUuids.includes(s.uuid));
+    if (!available.length) {
       ui.notifications.warn(game.i18n.localize("COCAGENCY.Session.NoScenes"));
       return;
     }
-    const options = game.scenes.map((s) => `<option value="${s.uuid}">${escapeHTML(s.name)}</option>`).join("");
+    const options = available.map((s) => `<option value="${s.uuid}">${escapeHTML(s.name)}</option>`).join("");
     const result = await foundry.applications.api.DialogV2.wait({
       window: { title: game.i18n.localize("COCAGENCY.Session.PickSceneTitle") },
       content: `<div class="form-group"><label>${game.i18n.localize("COCAGENCY.Session.Scene")}</label><select name="sceneUuid">${options}</select></div>`,
@@ -941,25 +944,24 @@ export class AgencyApp extends HandlebarsApplicationMixin(ApplicationV2) {
     });
     if (!result?.sceneUuid) return;
     await mutate((data) => {
-      const session = findSession(data, sessionId);
-      if (session) session.sceneUuid = result.sceneUuid;
+      const s = findSession(data, sessionId);
+      if (s && !s.sceneUuids.includes(result.sceneUuid)) s.sceneUuids.push(result.sceneUuid);
     });
     this.render();
   }
 
   async unlinkScene(event, target) {
-    const { sessionId } = target.dataset;
+    const { sessionId, sceneUuid } = target.dataset;
     await mutate((data) => {
       const session = findSession(data, sessionId);
-      if (session) session.sceneUuid = null;
+      if (session) session.sceneUuids = session.sceneUuids.filter((u) => u !== sceneUuid);
     });
     this.render();
   }
 
   async activateScene(event, target) {
-    const { sessionId } = target.dataset;
-    const session = findSession(getData(), sessionId);
-    const scene = session?.sceneUuid ? await fromUuid(session.sceneUuid) : null;
+    const { sceneUuid } = target.dataset;
+    const scene = await fromUuid(sceneUuid);
     await scene?.activate();
   }
 

@@ -39,8 +39,9 @@ Non affilié à Chaosium Inc. Projet fan, à but non commercial.
   joueurs" sous chaque handout/PNJ.
 - **Historique des révélations** : le MJ dispose, par partie, d'un journal
   listant qui a reçu quel handout et quand.
-- **Scène liée** : une partie peut être reliée à une scène du monde ; le MJ
-  peut l'activer pour toute la table en un clic depuis la fenêtre.
+- **Scènes liées** : une partie peut être reliée à plusieurs scènes du monde ;
+  le MJ peut activer l'une d'elles pour toute la table en un clic. Cette
+  section est strictement réservée au MJ, les joueurs ne la voient jamais.
 
 ### Société d'investigateurs
 

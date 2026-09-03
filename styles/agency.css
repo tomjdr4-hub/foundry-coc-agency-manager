@@ -524,10 +524,21 @@
 
 .coc-agency-scene-link {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 8px;
   margin-bottom: 8px;
   color: #a89a7d;
+}
+
+.coc-agency-scene-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #24221d;
+  border: 1px solid #4a4030;
+  border-radius: 12px;
+  padding: 2px 4px 2px 10px;
 }
 
 .coc-agency-reveal-log {

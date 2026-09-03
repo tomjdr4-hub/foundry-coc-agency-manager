@@ -75,23 +75,24 @@
         </button>
       </header>
 
+      {{#if @root.isGM}}
       <div class="coc-agency-scene-link">
-        {{#if sceneName}}
-        <span><i class="fa-solid fa-map-location-dot"></i> {{sceneName}}</span>
-        {{#if @root.isGM}}
-        <button type="button" class="coc-agency-btn coc-agency-btn-sm" data-action="activateScene" data-session-id="{{id}}">
-          <i class="fa-solid fa-play"></i> {{localize "COCAGENCY.Session.ActivateScene"}}
-        </button>
-        <button type="button" class="coc-agency-btn coc-agency-btn-sm" data-action="unlinkScene" data-session-id="{{id}}">
-          <i class="fa-solid fa-link-slash"></i> {{localize "COCAGENCY.Session.UnlinkScene"}}
-        </button>
-        {{/if}}
-        {{else if @root.isGM}}
+        {{#each scenes as |scene|}}
+        <span class="coc-agency-scene-chip">
+          <i class="fa-solid fa-map-location-dot"></i> {{scene.name}}
+          <button type="button" class="coc-agency-btn coc-agency-btn-sm" data-action="activateScene" data-session-id="{{../id}}" data-scene-uuid="{{scene.uuid}}" title="{{localize 'COCAGENCY.Session.ActivateScene'}}">
+            <i class="fa-solid fa-play"></i>
+          </button>
+          <button type="button" class="coc-agency-btn coc-agency-btn-sm" data-action="unlinkScene" data-session-id="{{../id}}" data-scene-uuid="{{scene.uuid}}" title="{{localize 'COCAGENCY.Session.UnlinkScene'}}">
+            <i class="fa-solid fa-link-slash"></i>
+          </button>
+        </span>
+        {{/each}}
         <button type="button" class="coc-agency-btn coc-agency-btn-sm" data-action="linkScene" data-session-id="{{id}}">
           <i class="fa-solid fa-link"></i> {{localize "COCAGENCY.Session.LinkScene"}}
         </button>
-        {{/if}}
       </div>
+      {{/if}}
 
       {{#if @root.isGM}}
       <textarea class="coc-agency-description" rows="2" placeholder="{{localize 'COCAGENCY.Session.RecapPlaceholder'}}" data-field="recap" data-session-id="{{id}}">{{recap}}</textarea>

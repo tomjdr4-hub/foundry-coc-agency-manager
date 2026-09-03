@@ -23,7 +23,11 @@ function emptyData() {
  */
 function normalize(data) {
   for (const session of data.sessions) {
-    session.sceneUuid ??= null;
+    if (session.sceneUuid !== undefined) {
+      session.sceneUuids = session.sceneUuid ? [session.sceneUuid] : [];
+      delete session.sceneUuid;
+    }
+    session.sceneUuids ??= [];
     session.recap ??= "";
     session.revealLog ??= [];
     for (const handout of session.handouts) handout.seenBy ??= [];
@@ -80,7 +84,7 @@ export function newSession(name) {
     order: Date.now(),
     visibility: VISIBILITY_ALL,
     journalUuid: null,
-    sceneUuid: null,
+    sceneUuids: [],
     recap: "",
     revealLog: [],
     handouts: [],
