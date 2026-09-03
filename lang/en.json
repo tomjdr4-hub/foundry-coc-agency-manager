@@ -91,9 +91,9 @@
     },
     "Equipment": {
       "Title": "Agency equipment",
-      "Create": "Add equipment",
-      "NewName": "New equipment",
-      "DescriptionPlaceholder": "Equipment description",
+      "DropHint": "Drag & drop an item here to add it to the catalog",
+      "NotePlaceholder": "Note (quantity, access condition...)",
+      "Unknown": "Item not found",
       "Order": "Order",
       "Empty": "No equipment in the catalog.",
       "Item": "Item",

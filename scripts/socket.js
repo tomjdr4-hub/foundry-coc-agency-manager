@@ -10,7 +10,7 @@ import {
   findEquipmentItem,
   newOrder
 } from "./data.js";
-import { ensureNpcNotePage } from "./helpers.js";
+import { ensureNpcNotePage, resolveItem } from "./helpers.js";
 import { HandoutLightboxApp } from "./apps/lightbox-app.js";
 
 /**
@@ -111,11 +111,12 @@ export function registerSocketListener() {
       const { societyId, itemId, requesterId } = payload ?? {};
       const requester = game.users.get(requesterId);
       const item = findEquipmentItem(getData(), societyId, itemId);
+      const itemName = resolveItem(item?.itemUuid)?.name ?? "?";
       if (!requester || !item) return;
       await mutate((data) => {
         const society = findSociety(data, societyId);
         society?.orders.push(
-          newOrder({ itemId: item.id, itemName: item.name, requestedBy: requester.id, requestedByName: requester.name })
+          newOrder({ itemId: item.id, itemName, requestedBy: requester.id, requestedByName: requester.name })
         );
       });
     }

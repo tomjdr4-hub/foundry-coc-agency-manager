@@ -6,9 +6,11 @@
   <a class="coc-agency-tab {{#if (eq tab "society")}}active{{/if}}" data-action="setTab" data-tab="society">
     <i class="fa-solid fa-building-columns"></i> {{localize "COCAGENCY.Tabs.Society"}}
   </a>
+  {{#if isGM}}
   <a class="coc-agency-tab {{#if (eq tab "network")}}active{{/if}}" data-action="setTab" data-tab="network">
     <i class="fa-solid fa-diagram-project"></i> {{localize "COCAGENCY.Tabs.Network"}}
   </a>
+  {{/if}}
   <a class="coc-agency-tab {{#if (eq tab "timeline")}}active{{/if}}" data-action="setTab" data-tab="timeline">
     <i class="fa-solid fa-timeline"></i> {{localize "COCAGENCY.Tabs.Timeline"}}
   </a>
@@ -441,25 +443,24 @@
       <div class="coc-agency-section">
         <div class="coc-agency-section-header">
           <h3><i class="fa-solid fa-box-archive"></i> {{localize "COCAGENCY.Equipment.Title"}}</h3>
-          {{#if @root.isGM}}
-          <button type="button" class="coc-agency-btn coc-agency-btn-sm" data-action="addEquipmentItem" data-society-id="{{id}}">
-            <i class="fa-solid fa-plus"></i> {{localize "COCAGENCY.Equipment.Create"}}
-          </button>
-          {{/if}}
         </div>
+        {{#if @root.isGM}}
+        <div class="coc-agency-dropzone" data-dropzone="equipment" data-society-id="{{id}}">
+          <i class="fa-solid fa-arrow-pointer"></i> {{localize "COCAGENCY.Equipment.DropHint"}}
+        </div>
+        {{/if}}
         <div class="coc-agency-cards">
           {{#each equipment as |e|}}
           <div class="coc-agency-card">
             <div class="coc-agency-card-thumb">
-              {{#if e.img}}<img src="{{e.img}}" alt="{{e.name}}" />{{else}}<i class="fa-solid fa-box coc-agency-card-icon"></i>{{/if}}
+              <img src="{{e.img}}" alt="{{e.name}}" />
             </div>
             <div class="coc-agency-card-body">
-              {{#if @root.isGM}}
-              <input type="text" class="coc-agency-title-input" value="{{e.name}}" data-field="name" data-society-id="{{e.societyId}}" data-item-id="{{e.id}}" />
-              <textarea class="coc-agency-note" rows="2" placeholder="{{localize 'COCAGENCY.Equipment.DescriptionPlaceholder'}}" data-field="description" data-society-id="{{e.societyId}}" data-item-id="{{e.id}}">{{e.description}}</textarea>
-              {{else}}
               <strong>{{e.name}}</strong>
-              {{#if e.description}}<p class="coc-agency-note-readonly">{{e.description}}</p>{{/if}}
+              {{#if @root.isGM}}
+              <textarea class="coc-agency-note" rows="2" placeholder="{{localize 'COCAGENCY.Equipment.NotePlaceholder'}}" data-field="note" data-society-id="{{e.societyId}}" data-item-id="{{e.id}}">{{e.note}}</textarea>
+              {{else}}
+              {{#if e.note}}<p class="coc-agency-note-readonly">{{e.note}}</p>{{/if}}
               {{/if}}
             </div>
             <div class="coc-agency-card-actions">
@@ -467,9 +468,6 @@
                 <i class="fa-solid fa-cart-shopping"></i> {{localize "COCAGENCY.Equipment.Order"}}
               </button>
               {{#if @root.isGM}}
-              <button type="button" class="coc-agency-btn coc-agency-btn-sm" data-action="setEquipmentImage" data-society-id="{{e.societyId}}" data-item-id="{{e.id}}">
-                <i class="fa-solid fa-image"></i>
-              </button>
               <button type="button" class="coc-agency-btn coc-agency-btn-sm coc-agency-btn-danger" data-action="deleteEquipmentItem" data-society-id="{{e.societyId}}" data-item-id="{{e.id}}">
                 <i class="fa-solid fa-trash"></i>
               </button>
@@ -533,15 +531,14 @@
   </div>
 </section>
 
+{{#if isGM}}
 <section class="coc-agency-panel {{#if (eq tab "network")}}active{{/if}}" data-tab="network">
   <div class="coc-agency-network">
-    {{#if isGM}}
     <div class="coc-agency-section-actions coc-agency-network-actions">
       <button type="button" class="coc-agency-btn coc-agency-btn-sm" data-action="addRelationship">
         <i class="fa-solid fa-plus"></i> {{localize "COCAGENCY.Network.AddRelationship"}}
       </button>
     </div>
-    {{/if}}
     {{#if network.hasNodes}}
     <div class="coc-agency-network-graph">
       <svg class="coc-agency-network-svg" preserveAspectRatio="none">
@@ -564,15 +561,14 @@
     {{else}}
     <p class="coc-agency-empty">{{localize "COCAGENCY.Network.Empty"}}</p>
     {{/if}}
-    {{#if isGM}}
     <ul class="coc-agency-relationship-list">
       {{#each network.edges as |edge|}}
       <li>{{edge.label}} <i class="fa-solid fa-trash coc-agency-icon-btn" data-action="deleteRelationship" data-relationship-id="{{edge.id}}"></i></li>
       {{/each}}
     </ul>
-    {{/if}}
   </div>
 </section>
+{{/if}}
 
 <section class="coc-agency-panel {{#if (eq tab "timeline")}}active{{/if}}" data-tab="timeline">
   <div class="coc-agency-timeline">

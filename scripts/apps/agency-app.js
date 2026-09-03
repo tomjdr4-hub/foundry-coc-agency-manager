@@ -31,6 +31,7 @@ import {
 import {
   getDroppedDocumentData,
   resolveActor,
+  resolveItem,
   resolveScene,
   resolveHandoutDisplay,
   openSessionNotesJournal,
@@ -92,9 +93,7 @@ export class AgencyApp extends HandlebarsApplicationMixin(ApplicationV2) {
       linkScene: this.prototype.linkScene,
       unlinkScene: this.prototype.unlinkScene,
       activateScene: this.prototype.activateScene,
-      addEquipmentItem: this.prototype.addEquipmentItem,
       deleteEquipmentItem: this.prototype.deleteEquipmentItem,
-      setEquipmentImage: this.prototype.setEquipmentImage,
       orderEquipment: this.prototype.orderEquipment,
       setOrderStatus: this.prototype.setOrderStatus,
       deleteOrder: this.prototype.deleteOrder,
@@ -177,7 +176,7 @@ export class AgencyApp extends HandlebarsApplicationMixin(ApplicationV2) {
       selectedOfficeId: this.state.selectedOfficeId,
       selectedOffice: selectedSociety?.offices.find((o) => o.id === this.state.selectedOfficeId) ?? null,
       placingOffice: this.state.placingOffice,
-      network: this._networkVM(data, isGM, user),
+      network: isGM ? this._networkVM(data) : null,
       searchQuery: this.state.searchQuery,
       searchResults: this._computeSearchResults(sessions, societies)
     };
@@ -214,8 +213,11 @@ export class AgencyApp extends HandlebarsApplicationMixin(ApplicationV2) {
     return results.slice(0, 20);
   }
 
-  /** Builds the visual network of tracked NPCs (nodes on a circle) and their relationships (edges). */
-  _networkVM(data, isGM, user) {
+  /**
+   * Builds the visual network of tracked NPCs (nodes on a circle) and their relationships (edges).
+   * GM-only feature: always computed from the full dataset, with no player visibility filtering.
+   */
+  _networkVM(data) {
     const nodesMap = new Map();
     const addNode = (actorUuid) => {
       if (!actorUuid || nodesMap.has(actorUuid)) return;
@@ -224,19 +226,15 @@ export class AgencyApp extends HandlebarsApplicationMixin(ApplicationV2) {
         actorUuid,
         name: actor?.name ?? game.i18n.localize("COCAGENCY.Npc.Unknown"),
         img: actor?.img ?? "icons/svg/mystery-man.svg",
-        canOpen: !!actor && (isGM || actor.testUserPermission(user, "LIMITED"))
+        canOpen: !!actor
       });
     };
 
     for (const session of data.sessions) {
-      if (!isGM && !isVisibleTo(session, user)) continue;
-      for (const npc of session.npcs) {
-        if (isGM || isVisibleToUser(npc, user.id)) addNode(npc.actorUuid);
-      }
+      for (const npc of session.npcs) addNode(npc.actorUuid);
     }
     for (const society of data.societies) {
       for (const office of society.offices) {
-        if (!isGM && !isVisibleTo(office, user)) continue;
         for (const uuid of office.npcUuids) addNode(uuid);
       }
     }
@@ -347,7 +345,16 @@ export class AgencyApp extends HandlebarsApplicationMixin(ApplicationV2) {
       offices: society.offices
         .filter((o) => isGM || isVisibleTo(o, user))
         .map((o) => this._officeVM(society.id, o, players, isGM, user)),
-      equipment: society.equipment.map((e) => ({ societyId: society.id, id: e.id, name: e.name, description: e.description, img: e.img })),
+      equipment: society.equipment.map((e) => {
+        const item = resolveItem(e.itemUuid);
+        return {
+          societyId: society.id,
+          id: e.id,
+          note: e.note,
+          name: item?.name ?? game.i18n.localize("COCAGENCY.Equipment.Unknown"),
+          img: item?.img ?? "icons/svg/item-bag.svg"
+        };
+      }),
       orders: society.orders
         .filter((o) => isGM || o.requestedBy === user.id)
         .map((o) => ({
@@ -399,6 +406,10 @@ export class AgencyApp extends HandlebarsApplicationMixin(ApplicationV2) {
     for (const el of this.element.querySelectorAll("[data-dropzone='office-npc']")) {
       el.addEventListener("dragover", (event) => event.preventDefault());
       el.addEventListener("drop", (event) => this.onDropOfficeNpc(event, el.dataset.societyId, el.dataset.officeId));
+    }
+    for (const el of this.element.querySelectorAll("[data-dropzone='equipment']")) {
+      el.addEventListener("dragover", (event) => event.preventDefault());
+      el.addEventListener("drop", (event) => this.onDropEquipment(event, el.dataset.societyId));
     }
     for (const el of this.element.querySelectorAll("[data-dropzone='office-assignment']")) {
       el.addEventListener("dragover", (event) => event.preventDefault());
@@ -969,10 +980,17 @@ export class AgencyApp extends HandlebarsApplicationMixin(ApplicationV2) {
   /* Equipment & orders                             */
   /* -------------------------------------------- */
 
-  async addEquipmentItem(event, target) {
-    const { societyId } = target.dataset;
+  async onDropEquipment(event, societyId) {
+    event.preventDefault();
+    const dropped = getDroppedDocumentData(event);
+    if (dropped?.type !== "Item") return;
+    const item = await fromUuid(dropped.uuid);
+    if (!item) return;
     await mutate((data) => {
-      findSociety(data, societyId)?.equipment.push(newEquipmentItem());
+      const society = findSociety(data, societyId);
+      if (society && !society.equipment.some((e) => e.itemUuid === dropped.uuid)) {
+        society.equipment.push(newEquipmentItem({ itemUuid: dropped.uuid }));
+      }
     });
     this.render();
   }
@@ -982,18 +1000,6 @@ export class AgencyApp extends HandlebarsApplicationMixin(ApplicationV2) {
     await mutate((data) => {
       const society = findSociety(data, societyId);
       if (society) society.equipment = society.equipment.filter((e) => e.id !== itemId);
-    });
-    this.render();
-  }
-
-  async setEquipmentImage(event, target) {
-    const { societyId, itemId } = target.dataset;
-    const current = findEquipmentItem(getData(), societyId, itemId)?.img ?? "";
-    const path = await pickImage(current);
-    if (path === undefined) return;
-    await mutate((data) => {
-      const item = findEquipmentItem(data, societyId, itemId);
-      if (item) item.img = path;
     });
     this.render();
   }
@@ -1008,10 +1014,11 @@ export class AgencyApp extends HandlebarsApplicationMixin(ApplicationV2) {
     if (game.user.isGM) {
       const item = findEquipmentItem(getData(), societyId, itemId);
       if (!item) return;
+      const itemName = resolveItem(item.itemUuid)?.name ?? "?";
       await mutate((data) => {
         const society = findSociety(data, societyId);
         society?.orders.push(
-          newOrder({ itemId: item.id, itemName: item.name, requestedBy: game.user.id, requestedByName: game.user.name })
+          newOrder({ itemId: item.id, itemName, requestedBy: game.user.id, requestedByName: game.user.name })
         );
       });
       this.render();
@@ -1048,7 +1055,7 @@ export class AgencyApp extends HandlebarsApplicationMixin(ApplicationV2) {
   /* -------------------------------------------- */
 
   async addRelationship() {
-    const { nodes } = this._networkVM(getData(), true, game.user);
+    const { nodes } = this._networkVM(getData());
     if (nodes.length < 2) {
       ui.notifications.warn(game.i18n.localize("COCAGENCY.Network.NotEnoughNpcs"));
       return;

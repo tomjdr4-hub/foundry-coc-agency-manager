@@ -56,17 +56,18 @@ Non affilié à Chaosium Inc. Projet fan, à but non commercial.
 - **Investigateurs affectés** : le MJ peut affecter un personnage-joueur à un
   bureau précis (glisser-déposer), pour représenter les postes/missions dans
   le monde. Un personnage n'est affecté qu'à un seul bureau à la fois.
-- **Équipement commandable** : chaque société a un catalogue d'équipement
-  (nom, description, image) géré par le MJ. Les joueurs peuvent commander un
+- **Équipement commandable** : chaque société a un catalogue constitué en
+  glissant-déposant de vrais Objets (Items) du monde ou d'un compendium (le
+  nom et l'image viennent de l'Item). Les joueurs peuvent commander un
   article ; le MJ fixe librement un délai (texte libre, ex. "3 jours") et
   suit le statut de chaque commande (en attente/approuvée/refusée/reçue).
 
 ### Réseau de PNJ
 
-Un onglet "Réseau" affiche un schéma visuel (bulles reliées par des traits)
-des PNJ suivis dans les parties et les bureaux, avec les relations que le MJ
-définit entre eux (ex. "connaît", "rival de"). Chaque joueur ne voit que les
-PNJ et relations auxquels il a accès.
+Un onglet "Réseau", réservé au MJ, affiche un schéma visuel (bulles reliées
+par des traits) de tous les PNJ suivis dans les parties et les bureaux, avec
+les relations que le MJ définit entre eux (ex. "connaît", "rival de"). Les
+joueurs ne voient jamais cet onglet.
 
 ### Chronologie de campagne
 

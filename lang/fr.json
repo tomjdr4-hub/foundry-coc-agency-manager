@@ -91,9 +91,9 @@
     },
     "Equipment": {
       "Title": "Équipement de l'agence",
-      "Create": "Ajouter un équipement",
-      "NewName": "Nouvel équipement",
-      "DescriptionPlaceholder": "Description de l'équipement",
+      "DropHint": "Glissez-déposez un objet ici pour l'ajouter au catalogue",
+      "NotePlaceholder": "Note (quantité, condition d'accès...)",
+      "Unknown": "Objet introuvable",
       "Order": "Commander",
       "Empty": "Aucun équipement au catalogue.",
       "Item": "Article",

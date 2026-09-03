@@ -36,6 +36,15 @@ export function resolveActor(actorUuid) {
   }
 }
 
+export function resolveItem(itemUuid) {
+  if (!itemUuid) return null;
+  try {
+    return fromUuidSync(itemUuid);
+  } catch (err) {
+    return null;
+  }
+}
+
 export function resolveScene(sceneUuid) {
   if (!sceneUuid) return null;
   try {

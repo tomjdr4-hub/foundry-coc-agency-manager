@@ -142,12 +142,11 @@ export function newOffice({ name, location = "", description = "" } = {}) {
   };
 }
 
-export function newEquipmentItem({ name, description = "" } = {}) {
+export function newEquipmentItem({ itemUuid, note = "" } = {}) {
   return {
     id: uid(),
-    name: name || game.i18n.localize("COCAGENCY.Equipment.NewName"),
-    description,
-    img: null
+    itemUuid,
+    note
   };
 }
 
