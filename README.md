@@ -1,6 +1,6 @@
 # Agency Manager - Appel de Cthulhu (Foundry VTT)
 
-Module Foundry VTT (v13 minimum, compatible v14) pour gérer une campagne
+Module Foundry VTT (v14 uniquement) pour gérer une campagne
 d'Appel de Cthulhu : handouts diffusés à la carte, suivi des PNJ rencontrés,
 notes de joueurs, et simulation d'une société d'investigateurs avec ses
 bureaux à travers le monde.

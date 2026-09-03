@@ -14,27 +14,19 @@ Hooks.once("ready", () => {
   registerSocketListener();
 });
 
+// Foundry v14 passes `controls` as a Record<string, SceneControl>, and each group's `tools`
+// is itself a Record<string, SceneControlTool> (not an array). `order` is a required field.
 Hooks.on("getSceneControlButtons", (controls) => {
-  // Foundry v13 passes controls as a keyed object with tools as a Record, v12 and earlier as arrays.
-  if (Array.isArray(controls)) {
-    const tokenControls = controls.find((c) => c.name === "token");
-    if (!tokenControls) return;
-    tokenControls.tools.push({
-      name: MODULE_ID,
-      title: "COCAGENCY.App.Title",
-      icon: "fa-solid fa-user-secret",
-      button: true,
-      onClick: () => new AgencyApp().render(true)
-    });
-  } else if (controls?.tokens) {
-    controls.tokens.tools[MODULE_ID] = {
-      name: MODULE_ID,
-      title: "COCAGENCY.App.Title",
-      icon: "fa-solid fa-user-secret",
-      button: true,
-      visible: true,
-      order: Object.keys(controls.tokens.tools).length,
-      onChange: () => new AgencyApp().render(true)
-    };
-  }
+  const tokenControls = controls.tokens;
+  if (!tokenControls) return;
+
+  tokenControls.tools[MODULE_ID] = {
+    name: MODULE_ID,
+    title: "COCAGENCY.App.Title",
+    icon: "fa-solid fa-user-secret",
+    button: true,
+    visible: true,
+    order: Object.keys(tokenControls.tools).length,
+    onChange: () => new AgencyApp().render(true)
+  };
 });
