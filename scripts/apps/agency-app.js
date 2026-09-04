@@ -76,6 +76,7 @@ export class AgencyApp extends HandlebarsApplicationMixin(ApplicationV2) {
       toggleNpcAll: this.prototype.toggleNpcAll,
       toggleNpcUser: this.prototype.toggleNpcUser,
       openActorSheet: this.prototype.openActorSheet,
+      enlargeImage: this.prototype.enlargeImage,
       openSessionNotes: this.prototype.openSessionNotes,
       openNpcNotes: this.prototype.openNpcNotes,
       createSociety: this.prototype.createSociety,
@@ -748,6 +749,14 @@ export class AgencyApp extends HandlebarsApplicationMixin(ApplicationV2) {
 
   async openActorSheet(event, target) {
     resolveActor(target.dataset.actorUuid)?.sheet?.render(true);
+  }
+
+  /** Opens a thumbnail image full-size, locally only (no broadcast to other players). */
+  enlargeImage(event, target) {
+    event.stopPropagation();
+    const { imgSrc, imgTitle } = target.dataset;
+    if (!imgSrc) return;
+    new HandoutLightboxApp({ title: imgTitle || "", kind: "image", img: imgSrc, html: null }).render(true);
   }
 
   /* -------------------------------------------- */

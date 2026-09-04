@@ -160,7 +160,7 @@
             {{#if h.isNew}}<span class="coc-agency-badge-new">{{localize "COCAGENCY.Common.New"}}</span>{{/if}}
             <div class="coc-agency-card-thumb">
               {{#if (eq h.kind "image")}}
-              <img src="{{h.img}}" alt="{{h.title}}" />
+              <img src="{{h.img}}" alt="{{h.title}}" data-action="enlargeImage" data-img-src="{{h.img}}" data-img-title="{{h.title}}" />
               {{else}}
               <i class="fa-solid fa-book-open coc-agency-card-icon"></i>
               {{/if}}
@@ -229,7 +229,7 @@
           <div class="coc-agency-card">
             {{#if n.isNew}}<span class="coc-agency-badge-new">{{localize "COCAGENCY.Common.New"}}</span>{{/if}}
             <div class="coc-agency-card-thumb">
-              <img src="{{n.img}}" alt="{{n.name}}" />
+              <img src="{{n.img}}" alt="{{n.name}}" data-action="enlargeImage" data-img-src="{{n.img}}" data-img-title="{{n.name}}" />
             </div>
             <div class="coc-agency-card-body">
               <strong>
@@ -413,7 +413,7 @@
             <div class="coc-agency-cards">
               {{#each npcs as |n|}}
               <div class="coc-agency-card coc-agency-card-compact">
-                <div class="coc-agency-card-thumb"><img src="{{n.img}}" alt="{{n.name}}" /></div>
+                <div class="coc-agency-card-thumb"><img src="{{n.img}}" alt="{{n.name}}" data-action="enlargeImage" data-img-src="{{n.img}}" data-img-title="{{n.name}}" /></div>
                 <div class="coc-agency-card-body"><strong>{{n.name}}</strong></div>
                 {{#if @root.isGM}}
                 <div class="coc-agency-card-actions">
@@ -439,7 +439,7 @@
             <div class="coc-agency-cards">
               {{#each assignedActors as |a|}}
               <div class="coc-agency-card coc-agency-card-compact {{#if a.isMine}}coc-agency-card-mine{{/if}}">
-                <div class="coc-agency-card-thumb"><img src="{{a.img}}" alt="{{a.name}}" /></div>
+                <div class="coc-agency-card-thumb"><img src="{{a.img}}" alt="{{a.name}}" data-action="enlargeImage" data-img-src="{{a.img}}" data-img-title="{{a.name}}" /></div>
                 <div class="coc-agency-card-body">
                   <strong>{{a.name}}</strong>
                   {{#if a.isMine}}<span class="coc-agency-mine-label">{{localize "COCAGENCY.Office.YourCharacter"}}</span>{{/if}}
@@ -475,7 +475,7 @@
           {{#each equipment as |e|}}
           <div class="coc-agency-card">
             <div class="coc-agency-card-thumb">
-              <img src="{{e.img}}" alt="{{e.name}}" />
+              <img src="{{e.img}}" alt="{{e.name}}" data-action="enlargeImage" data-img-src="{{e.img}}" data-img-title="{{e.name}}" />
             </div>
             <div class="coc-agency-card-body">
               <strong>{{e.name}}</strong>

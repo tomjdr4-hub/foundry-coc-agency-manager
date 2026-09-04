@@ -28,6 +28,9 @@ Non affilié à Chaosium Inc. Projet fan, à but non commercial.
   droits d'écriture accordés automatiquement aux joueurs qui y ont accès -
   les joueurs y prennent leurs notes d'enquête via l'éditeur de journal natif
   de Foundry.
+- **Vignettes agrandissables** : cliquer sur l'image d'un PNJ, d'un handout,
+  d'un membre du personnel/investigateur affecté ou d'un équipement l'ouvre
+  en grand (localement, sans rien diffuser aux autres joueurs).
 - **Notes personnelles par PNJ** : chaque joueur peut ouvrir, depuis la carte
   d'un PNJ, sa propre page de notes privée sur ce PNJ (bouton icône
   post-it). Cette page vit dans le journal de la partie mais n'est visible
