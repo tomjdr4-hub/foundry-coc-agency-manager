@@ -14,6 +14,15 @@
   <a class="coc-agency-tab {{#if (eq tab "timeline")}}active{{/if}}" data-action="setTab" data-tab="timeline">
     <i class="fa-solid fa-timeline"></i> {{localize "COCAGENCY.Tabs.Timeline"}}
   </a>
+  {{#if isGM}}
+  <button type="button" class="coc-agency-worldclock" data-action="editWorldClock" title="{{localize 'COCAGENCY.Calendar.EditClock'}}">
+    <i class="fa-solid fa-clock"></i> {{#if currentDateLabel}}{{currentDateLabel}}{{else}}{{localize "COCAGENCY.Calendar.SetClock"}}{{/if}}
+  </button>
+  {{else if currentDateLabel}}
+  <span class="coc-agency-worldclock coc-agency-worldclock-readonly">
+    <i class="fa-solid fa-clock"></i> {{currentDateLabel}}
+  </span>
+  {{/if}}
   <div class="coc-agency-nav-search">
     <i class="fa-solid fa-magnifying-glass"></i>
     <input type="text" data-search-input value="{{searchQuery}}" placeholder="{{localize 'COCAGENCY.Search.Placeholder'}}" />
@@ -76,6 +85,19 @@
           <i class="fa-solid fa-book"></i> {{localize "COCAGENCY.Session.Notes"}}
         </button>
       </header>
+
+      <div class="coc-agency-session-date">
+        {{#if @root.isGM}}
+        <label>
+          <i class="fa-solid fa-calendar-days"></i>
+          <input type="datetime-local" value="{{date}}" data-field="date" data-session-id="{{id}}" />
+        </label>
+        {{else}}
+        {{#if dateLabel}}
+        <span><i class="fa-solid fa-calendar-days"></i> {{dateLabel}}</span>
+        {{/if}}
+        {{/if}}
+      </div>
 
       {{#if @root.isGM}}
       <div class="coc-agency-scene-link">
@@ -572,13 +594,12 @@
 
 <section class="coc-agency-panel {{#if (eq tab "timeline")}}active{{/if}}" data-tab="timeline">
   <div class="coc-agency-timeline">
-    {{#each sessions as |session|}}
-    {{#if session.recap}}
+    {{#each timelineSessions as |session|}}
     <div class="coc-agency-timeline-entry">
       <h3>{{session.name}}</h3>
+      {{#if session.dateLabel}}<p class="coc-agency-timeline-date"><i class="fa-solid fa-calendar-days"></i> {{session.dateLabel}}</p>{{/if}}
       <p>{{session.recap}}</p>
     </div>
-    {{/if}}
     {{else}}
     <p class="coc-agency-empty">{{localize "COCAGENCY.Timeline.Empty"}}</p>
     {{/each}}

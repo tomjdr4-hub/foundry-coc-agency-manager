@@ -69,11 +69,20 @@ par des traits) de tous les PNJ suivis dans les parties et les bureaux, avec
 les relations que le MJ définit entre eux (ex. "connaît", "rival de"). Les
 joueurs ne voient jamais cet onglet.
 
+### Date fictive et horloge de campagne
+
+- Chaque partie peut avoir une **date/heure fictive** (ex. 1er avril 1925,
+  12h00), réglable par le MJ et visible par les joueurs y ayant accès.
+- Une **horloge de campagne** globale (icône dans l'en-tête) affiche et fixe
+  la date/heure fictive courante du monde, avec des raccourcis "+1 heure" et
+  "+1 jour" pour l'avancer rapidement. Réglable par le MJ, visible par tous.
+
 ### Chronologie de campagne
 
-Un onglet "Chronologie" liste, dans l'ordre, le récapitulatif de chaque
-partie visible par le joueur (texte libre rédigé par le MJ dans le détail de
-la partie), pour donner une vue d'ensemble de la campagne.
+Un onglet "Chronologie" liste le récapitulatif de chaque partie visible par
+le joueur (texte libre rédigé par le MJ dans le détail de la partie), avec sa
+date fictive si elle est définie. Les parties datées sont triées par ordre
+chronologique de fiction plutôt que par ordre de création.
 
 ### Recherche globale
 

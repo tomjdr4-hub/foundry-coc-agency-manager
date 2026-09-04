@@ -35,6 +35,55 @@
   border-bottom-color: #e8c77a;
 }
 
+.coc-agency-worldclock {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #15140f;
+  border: 1px solid #4a4030;
+  color: #e8c77a;
+  border-radius: 4px;
+  padding: 3px 10px;
+  margin-left: 10px;
+  cursor: pointer;
+  font-size: 0.9em;
+  white-space: nowrap;
+}
+
+.coc-agency-worldclock:hover {
+  border-color: #6b5c3a;
+}
+
+.coc-agency-worldclock-readonly {
+  cursor: default;
+  color: #a89a7d;
+}
+
+.coc-agency-session-date {
+  margin-bottom: 8px;
+  color: #a89a7d;
+}
+
+.coc-agency-session-date input {
+  background: #24221d;
+  border: 1px solid #4a4030;
+  color: inherit;
+  border-radius: 4px;
+  padding: 2px 4px;
+}
+
+.coc-agency-session-date label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.coc-agency-timeline-date {
+  color: #7d7460;
+  font-size: 0.85em;
+  margin: 0 0 4px 0;
+}
+
 .coc-agency-nav-search {
   position: relative;
   margin-left: auto;

@@ -54,6 +54,37 @@ export function resolveScene(sceneUuid) {
   }
 }
 
+/**
+ * Formats a fictional date/time stored as a "YYYY-MM-DDTHH:mm" string (the native value of an
+ * <input type="datetime-local">) into a localized display label. Pure string parsing: the value
+ * is an abstract in-fiction calendar value, never a real timezone-bound instant.
+ */
+export function formatFictionalDate(value) {
+  if (!value) return "";
+  const [datePart, timePart] = value.split("T");
+  const [year, month, day] = datePart.split("-").map(Number);
+  if (!year || !month || !day) return value;
+  const monthName = game.i18n.localize(`COCAGENCY.Calendar.Month${month}`);
+  let label = `${day} ${monthName} ${year}`;
+  if (timePart) label += ` - ${timePart}`;
+  return label;
+}
+
+/**
+ * Advances a "YYYY-MM-DDTHH:mm" fictional date/time by the given offset and returns the new
+ * value in the same format. Uses Date.UTC so the calendar math is correct for any year (the
+ * legacy two-digit-year special case in the Date constructor only applies to years 0-99).
+ */
+export function advanceFictionalDate(value, { days = 0, hours = 0, minutes = 0 } = {}) {
+  const [datePart, timePart = "00:00"] = (value || "1925-01-01T00:00").split("T");
+  const [year, month, day] = datePart.split("-").map(Number);
+  const [hour, minute] = timePart.split(":").map(Number);
+  const epoch = Date.UTC(year, month - 1, day, hour, minute) + ((days * 24 + hours) * 60 + minutes) * 60000;
+  const d = new Date(epoch);
+  const pad = (n) => String(n).padStart(2, "0");
+  return `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())}T${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}`;
+}
+
 /** Builds the { title, kind, img, html } payload used to render a handout, either locally or via socket. */
 export async function resolveHandoutDisplay(handout) {
   if (handout.kind === "image") {

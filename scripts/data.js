@@ -12,7 +12,8 @@ function emptyData() {
     version: 1,
     sessions: [],
     societies: [],
-    npcRelationships: []
+    npcRelationships: [],
+    currentDate: null
   };
 }
 
@@ -28,6 +29,7 @@ function normalize(data) {
       delete session.sceneUuid;
     }
     session.sceneUuids ??= [];
+    session.date ??= null;
     session.recap ??= "";
     session.revealLog ??= [];
     for (const handout of session.handouts) handout.seenBy ??= [];
@@ -57,6 +59,7 @@ export function getData() {
   data.sessions ??= [];
   data.societies ??= [];
   data.npcRelationships ??= [];
+  data.currentDate ??= null;
   return normalize(data);
 }
 
@@ -85,6 +88,7 @@ export function newSession(name) {
     visibility: VISIBILITY_ALL,
     journalUuid: null,
     sceneUuids: [],
+    date: null,
     recap: "",
     revealLog: [],
     handouts: [],

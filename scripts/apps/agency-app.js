@@ -36,7 +36,9 @@ import {
   resolveHandoutDisplay,
   openSessionNotesJournal,
   ensureNpcNotePage,
-  pickImage
+  pickImage,
+  formatFictionalDate,
+  advanceFictionalDate
 } from "../helpers.js";
 import { pushHandoutToPlayers, requestNpcNotePage, markItemsSeen, requestEquipmentOrder } from "../socket.js";
 import { HandoutLightboxApp } from "./lightbox-app.js";
@@ -100,6 +102,7 @@ export class AgencyApp extends HandlebarsApplicationMixin(ApplicationV2) {
       addRelationship: this.prototype.addRelationship,
       deleteRelationship: this.prototype.deleteRelationship,
       jumpToResult: this.prototype.jumpToResult,
+      editWorldClock: this.prototype.editWorldClock,
       exportData: this.prototype.exportData,
       importData: this.prototype.importData
     }
@@ -178,7 +181,17 @@ export class AgencyApp extends HandlebarsApplicationMixin(ApplicationV2) {
       placingOffice: this.state.placingOffice,
       network: isGM ? this._networkVM(data) : null,
       searchQuery: this.state.searchQuery,
-      searchResults: this._computeSearchResults(sessions, societies)
+      searchResults: this._computeSearchResults(sessions, societies),
+      currentDate: data.currentDate,
+      currentDateLabel: formatFictionalDate(data.currentDate),
+      timelineSessions: sessions
+        .filter((s) => s.recap)
+        .sort((a, b) => {
+          if (a.date && b.date) return a.date < b.date ? -1 : a.date > b.date ? 1 : 0;
+          if (a.date) return -1;
+          if (b.date) return 1;
+          return 0;
+        })
     };
   }
 
@@ -274,6 +287,8 @@ export class AgencyApp extends HandlebarsApplicationMixin(ApplicationV2) {
       name: session.name,
       journalUuid: session.journalUuid,
       recap: session.recap,
+      date: session.date,
+      dateLabel: formatFictionalDate(session.date),
       scenes: isGM
         ? session.sceneUuids.map((uuid) => ({ uuid, name: resolveScene(uuid)?.name ?? "?" }))
         : [],
@@ -1123,6 +1138,51 @@ export class AgencyApp extends HandlebarsApplicationMixin(ApplicationV2) {
     });
     if (!confirmed) return;
     await saveData(parsed);
+    this.render();
+  }
+
+  /* -------------------------------------------- */
+  /* Fictional campaign clock                       */
+  /* -------------------------------------------- */
+
+  async editWorldClock() {
+    const data = getData();
+    const result = await foundry.applications.api.DialogV2.wait({
+      window: { title: game.i18n.localize("COCAGENCY.Calendar.EditClock") },
+      content: `
+        <div class="form-group">
+          <label>${game.i18n.localize("COCAGENCY.Calendar.DateTime")}</label>
+          <input type="datetime-local" name="value" value="${data.currentDate ?? ""}" />
+        </div>`,
+      buttons: [
+        {
+          action: "set",
+          label: game.i18n.localize("COCAGENCY.Calendar.SetExact"),
+          default: true,
+          callback: (ev, button) => ({ type: "set", value: new FormDataExtended(button.form).object.value })
+        },
+        {
+          action: "plus1h",
+          label: game.i18n.localize("COCAGENCY.Calendar.Plus1Hour"),
+          callback: () => ({ type: "advance", hours: 1 })
+        },
+        {
+          action: "plus1d",
+          label: game.i18n.localize("COCAGENCY.Calendar.Plus1Day"),
+          callback: () => ({ type: "advance", days: 1 })
+        },
+        { action: "cancel", label: game.i18n.localize("COCAGENCY.Common.Cancel") }
+      ],
+      rejectClose: false
+    });
+    if (!result || typeof result === "string") return;
+    await mutate((d) => {
+      if (result.type === "set") {
+        if (result.value) d.currentDate = result.value;
+      } else {
+        d.currentDate = advanceFictionalDate(d.currentDate, result);
+      }
+    });
     this.render();
   }
 }
