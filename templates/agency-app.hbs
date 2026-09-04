@@ -184,10 +184,13 @@
               {{/if}}
             </div>
             <div class="coc-agency-card-actions">
+              <button type="button" class="coc-agency-btn coc-agency-btn-sm" data-action="viewHandout" data-session-id="{{h.sessionId}}" data-handout-id="{{h.id}}" title="{{localize 'COCAGENCY.Handout.View'}}">
+                <i class="fa-solid fa-magnifying-glass"></i>
+              </button>
+              {{#if @root.isGM}}
               <button type="button" class="coc-agency-btn coc-agency-btn-sm" data-action="showHandout" data-session-id="{{h.sessionId}}" data-handout-id="{{h.id}}" title="{{localize 'COCAGENCY.Handout.Show'}}">
                 <i class="fa-solid fa-eye"></i>
               </button>
-              {{#if @root.isGM}}
               <button type="button" class="coc-agency-btn coc-agency-btn-sm coc-agency-btn-danger" data-action="deleteHandout" data-session-id="{{h.sessionId}}" data-handout-id="{{h.id}}" title="{{localize 'COCAGENCY.Common.Delete'}}">
                 <i class="fa-solid fa-trash"></i>
               </button>

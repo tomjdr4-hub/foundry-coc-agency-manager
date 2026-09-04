@@ -17,9 +17,11 @@ Non affilié à Chaosium Inc. Projet fan, à but non commercial.
 - Le MJ crée une partie par séance de jeu.
 - **Handouts** : le MJ dépose des images ou lie des pages de journal
   existantes, classées par partie. Chaque handout a sa propre visibilité
-  (tous les joueurs, ou une sélection précise) et un bouton "Montrer aux
-  joueurs" qui pousse le document directement sur l'écran des joueurs ciblés
-  (sans dépendre des permissions Foundry classiques du document source).
+  (tous les joueurs, ou une sélection précise). Un bouton "Consulter"
+  (loupe), visible par tous ceux qui y ont accès, permet de le rouvrir
+  soi-même à tout moment ; le bouton "Montrer aux joueurs" (œil), réservé au
+  MJ, le pousse en plus directement sur l'écran des joueurs ciblés (sans
+  dépendre des permissions Foundry classiques du document source).
 - **PNJ rencontrés** : le MJ glisse-dépose un Acteur du monde dans une partie
   pour l'ajouter à la liste des PNJ rencontrés, avec une note privée et une
   visibilité réglable par joueur (idéal pour ne révéler un PNJ qu'aux joueurs

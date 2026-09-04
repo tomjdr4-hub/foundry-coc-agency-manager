@@ -54,13 +54,16 @@
       "Scene": "Scene",
       "NoScenes": "No scene available in this world.",
       "RecapPlaceholder": "Session recap, visible to players with access...",
-      "RevealLog": "Reveal history"
+      "RevealLog": "Reveal history",
+      "NoGMOnline": "No GM is currently connected to create this notes journal.",
+      "NotesRequested": "Request sent to the GM, the journal will open automatically."
     },
     "Handout": {
       "Title": "Handouts",
       "NewName": "New handout",
       "AddImage": "Image",
       "AddJournal": "Journal page",
+      "View": "View",
       "Show": "Show to players",
       "Empty": "No handout in this session.",
       "PickJournalTitle": "Pick a journal page",

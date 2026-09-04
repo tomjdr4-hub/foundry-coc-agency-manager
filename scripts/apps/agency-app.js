@@ -40,7 +40,13 @@ import {
   formatFictionalDate,
   advanceFictionalDate
 } from "../helpers.js";
-import { pushHandoutToPlayers, requestNpcNotePage, markItemsSeen, requestEquipmentOrder } from "../socket.js";
+import {
+  pushHandoutToPlayers,
+  requestNpcNotePage,
+  requestSessionNotes,
+  markItemsSeen,
+  requestEquipmentOrder
+} from "../socket.js";
 import { HandoutLightboxApp } from "./lightbox-app.js";
 
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
@@ -69,6 +75,7 @@ export class AgencyApp extends HandlebarsApplicationMixin(ApplicationV2) {
       addHandoutImage: this.prototype.addHandoutImage,
       addHandoutJournal: this.prototype.addHandoutJournal,
       deleteHandout: this.prototype.deleteHandout,
+      viewHandout: this.prototype.viewHandout,
       showHandout: this.prototype.showHandout,
       toggleHandoutAll: this.prototype.toggleHandoutAll,
       toggleHandoutUser: this.prototype.toggleHandoutUser,
@@ -564,11 +571,25 @@ export class AgencyApp extends HandlebarsApplicationMixin(ApplicationV2) {
     this.render();
   }
 
+  /**
+   * Opens the session's shared notes journal, creating it and granting access on first use.
+   * Journal creation/ownership changes need GM-level permission, so a non-GM player's request is
+   * relayed to a connected GM's client via socket (same pattern as NPC note pages).
+   */
   async openSessionNotes(event, target) {
     const { sessionId } = target.dataset;
-    const session = findSession(getData(), sessionId);
-    if (!session) return;
-    await openSessionNotesJournal(session, (fn) => mutate((d) => fn(findSession(d, sessionId))));
+    if (game.user.isGM) {
+      const session = findSession(getData(), sessionId);
+      if (!session) return;
+      await openSessionNotesJournal(session, (fn) => mutate((d) => fn(findSession(d, sessionId))));
+      return;
+    }
+    if (!game.users.some((u) => u.isGM && u.active)) {
+      ui.notifications.warn(game.i18n.localize("COCAGENCY.Session.NoGMOnline"));
+      return;
+    }
+    requestSessionNotes(sessionId);
+    ui.notifications.info(game.i18n.localize("COCAGENCY.Session.NotesRequested"));
   }
 
   /**
@@ -666,6 +687,16 @@ export class AgencyApp extends HandlebarsApplicationMixin(ApplicationV2) {
     this.render();
   }
 
+  /** Lets any user who can already see a handout open it locally — no broadcast, no data write. */
+  async viewHandout(event, target) {
+    const { sessionId, handoutId } = target.dataset;
+    const handout = findHandout(getData(), sessionId, handoutId);
+    if (!handout) return;
+    const display = await resolveHandoutDisplay(handout);
+    new HandoutLightboxApp(display).render(true);
+  }
+
+  /** GM-only: pushes the handout onto the targeted players' screens and logs the reveal. */
   async showHandout(event, target) {
     const { sessionId, handoutId } = target.dataset;
     const handout = findHandout(getData(), sessionId, handoutId);

@@ -54,13 +54,16 @@
       "Scene": "Scène",
       "NoScenes": "Aucune scène disponible dans ce monde.",
       "RecapPlaceholder": "Récapitulatif de la partie, visible par les joueurs y ayant accès...",
-      "RevealLog": "Historique des révélations"
+      "RevealLog": "Historique des révélations",
+      "NoGMOnline": "Aucun MJ n'est actuellement connecté pour créer ce journal de notes.",
+      "NotesRequested": "Demande envoyée au MJ, le journal va s'ouvrir automatiquement."
     },
     "Handout": {
       "Title": "Handouts",
       "NewName": "Nouveau handout",
       "AddImage": "Image",
       "AddJournal": "Page de journal",
+      "View": "Consulter",
       "Show": "Montrer aux joueurs",
       "Empty": "Aucun handout dans cette partie.",
       "PickJournalTitle": "Choisir une page de journal",

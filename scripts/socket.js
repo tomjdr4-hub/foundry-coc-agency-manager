@@ -10,7 +10,7 @@ import {
   findEquipmentItem,
   newOrder
 } from "./data.js";
-import { ensureNpcNotePage, resolveItem } from "./helpers.js";
+import { ensureNpcNotePage, getOrCreateSessionJournal, grantSessionJournalOwnership, resolveItem } from "./helpers.js";
 import { HandoutLightboxApp } from "./apps/lightbox-app.js";
 
 /**
@@ -40,6 +40,25 @@ function notifyNpcNoteReady(pageUuid, targetUserId) {
   game.socket.emit(SOCKET_NAME, {
     action: "npcNoteReady",
     payload: { pageUuid, targetUserId }
+  });
+}
+
+/**
+ * Asks a connected GM's client to create (or find) the session's shared notes journal and grant
+ * the requester ownership on it. Journal creation/ownership changes require GM-level permission,
+ * which a Player role may not have, so the actual work always runs on a GM client via this relay.
+ */
+export function requestSessionNotes(sessionId) {
+  game.socket.emit(SOCKET_NAME, {
+    action: "requestSessionNotes",
+    payload: { sessionId, requesterId: game.user.id }
+  });
+}
+
+function notifySessionNotesReady(journalUuid, targetUserId) {
+  game.socket.emit(SOCKET_NAME, {
+    action: "sessionNotesReady",
+    payload: { journalUuid, targetUserId }
   });
 }
 
@@ -91,6 +110,23 @@ export function registerSocketListener() {
         page = await fromUuid(pageUuid);
       }
       page?.sheet.render(true);
+    } else if (action === "requestSessionNotes") {
+      if (!game.user.isGM) return;
+      const { sessionId, requesterId } = payload ?? {};
+      const session = findSession(getData(), sessionId);
+      if (!session) return;
+      const entry = await getOrCreateSessionJournal(session, (fn) => mutate((d) => fn(findSession(d, sessionId))));
+      await grantSessionJournalOwnership(entry, session);
+      notifySessionNotesReady(entry.uuid, requesterId);
+    } else if (action === "sessionNotesReady") {
+      const { journalUuid, targetUserId } = payload ?? {};
+      if (targetUserId !== game.user.id) return;
+      let entry = await fromUuid(journalUuid);
+      if (!entry) {
+        await new Promise((resolve) => setTimeout(resolve, 400));
+        entry = await fromUuid(journalUuid);
+      }
+      entry?.sheet.render(true);
     } else if (action === "markSeen") {
       if (!game.user.isGM) return;
       const { sessionId, handoutIds, npcIds, requesterId } = payload ?? {};
